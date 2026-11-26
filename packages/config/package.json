@@ -1,0 +1,10 @@
+{
+  "name": "@encore/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./typescript/base.json": "./typescript/base.json",
+    "./eslint/boundary.mjs": "./eslint/boundary.mjs",
+    "./env": "./env/index.ts"
+  }
+}

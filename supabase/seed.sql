@@ -1,0 +1,2 @@
+-- Authorized demonstration fixtures (H01 Human, A01 AI-Assisted, G01 AI-Generated)
+-- Populate during H02-10 after 202611270001..202611270013 migrations are applied.

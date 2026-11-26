@@ -1,0 +1,26 @@
+{
+  "name": "@encore/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@encore/contracts": "workspace:*",
+    "@encore/core": "workspace:*",
+    "@encore/solana-client": "workspace:*",
+    "@pollar/core": "0.12.0",
+    "@solana/web3.js": "1.95.8",
+    "@supabase/supabase-js": "2.47.10"
+  },
+  "devDependencies": {
+    "@encore/config": "workspace:*",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
