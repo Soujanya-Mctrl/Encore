@@ -30,7 +30,10 @@ mod tests {
             let artist = compute_bps_fee(amount, 1000).unwrap();
             let platform = compute_bps_fee(amount, 500).unwrap();
             let seller = amount - artist - platform;
-            assert_eq!(seller as u128 + artist as u128 + platform as u128, amount as u128);
+            assert_eq!(
+                seller as u128 + artist as u128 + platform as u128,
+                amount as u128
+            );
         }
     }
 

@@ -1,31 +1,43 @@
 # PDF Phase 1: Feasibility and Setup
 
-Status: **In progress.** Local code and tests do not substitute for live service and devnet evidence. Credential setup is the immediate user action; see [the setup guide](../setup/CREDENTIALS.md).
+Status: **Verified engineering checks; original exit gate remains open for deferred voice and the limitations below.** The user explicitly deferred ElevenLabs on 27 November 2026. Phase 2 registry work can follow this checkpoint; do not describe the original PDF checklist as fully complete.
 
-## Current checkpoint
+## Checklist and evidence
 
-| Requirement | Status | Evidence / next action |
+| Requirement | Result | Evidence / remaining work |
 | --- | --- | --- |
-| Monorepo and package configuration | Implemented; verification in progress | Pinned dependencies, Node/pnpm versions, repaired exports, boundary check, Vitest/Playwright configuration, reconciled lockfile |
-| Local environment | Ready | `pnpm setup:local` creates ignored `apps/web/.env.local`, generates a random secret, preserves existing files; `pnpm check:setup` redacts values |
-| Pollar social/email/external wallet integration | Implemented locally; live check pending | Device-signed DPoP exchange against authenticated Pollar profile and wallet responses; no browser-asserted identity accepted; live dashboard key required |
-| Embedded custom Anchor signing | Unverified | SDK/source inspection does not establish live support; keep external signer fallback |
-| Persistent Supabase | Pending | User will create credentials; then apply migrations and test persistence/access controls |
-| Solana devnet funds, mint and sample signed transfer | Pending | Record real network/mint/transaction evidence; never use placeholder program ID as a deployment |
-| ElevenLabs live session and read-only tool | Pending | User will create API key/agent; run a real conversation and tool check |
-| Firecrawl authorized brief | Pending | User will create API key; run and record an actual authorized extraction |
-| Permission for three demo tracks | Confirmed by user | User explicitly confirmed permission on 27 November 2026; track metadata/fixtures can be supplied at the catalog checkpoint |
+| Monorepo and package configuration | Passed | Node 24.22.3, pnpm 9.15.0, exact package versions, frozen lockfile, import-boundary checks, package and tool TypeScript checks |
+| Local environment | Passed | Ignored local env, generated session secret, redacted setup check; Supabase persistence selected |
+| Pollar SDK integration | Passed for external wallet | Real SIWS login and device-bound DPoP backend exchange; live browser verifies HttpOnly cookie, wallet binding, refresh persistence and rejected admin onboarding |
+| Pollar email/social and hosted wallet provisioning | Not exercised | Official UI is wired; live external-wallet evidence does not prove these paths |
+| Custom transaction signer fallback | Available | External wallet adapter custom-transaction unit test and real devnet transaction signing; hosted custom Anchor signing remains unverified, so retain external fallback |
+| Supabase initialization | Passed | Identity migrations 001 and 002 applied; six tables with RLS; persistence across independent clients; anonymous reads hide records and inserts return 401 |
+| Devnet funds, test mint and signed sample transfer | Passed | User funded 0.5 test SOL; created six-decimal test mint and confirmed SOL/token transfers; public evidence below |
+| ElevenLabs live session and read-only tool | Deferred by user | API key and agent absent. Real voice conversation/tool check remains required before the original gate can close |
+| Firecrawl crawl test | Passed | Real v2 scrape of the user's public Encore repository; API feasibility only. Commissioning brief extraction/matching belongs to later work |
+| Three demo-track permissions | Confirmed by user | No further permission question required. Track audio, metadata and evidence fixtures remain Phase 2 catalog inputs |
+| Event rules and sponsor criteria | Partially checked | Official site confirms November 27–29, 2026. Exact cutoff, prebuild rules and sponsor criteria were not independently established; no eligibility claim |
+| Rust/Solana toolchain | See validation record | Anchor CLI 0.30.1 and Solana CLI 1.18.26 verified; Rust host tests pass. SBF build/deployment is separate from host testing |
+
+## Public devnet evidence
+
+- Test payer: `2VXLffNhejZKNgeN9dNjG4s7pe8T6bGihQBmVGbTn2vM`.
+- Test mint: `7H5EwCxRKPJ3rsdb88zsv3k8dEroYzYVguGUP9kjdZnP`, six decimals. This is an Encore demo token, not real USDC.
+- [Confirmed transfer of 1,000,000 smallest units](https://explorer.solana.com/tx/2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW?cluster=devnet).
+- Sanitized service and transaction results: [live evidence](../testing/PHASE_ONE_LIVE_RESULTS.json).
+
+No Encore program has been deployed. Its placeholder ID is not a deployment address. Devnet sample transfers do not prove future support, purchase, resale or redemption instructions.
 
 ## Authentication trust boundary
 
-The session endpoint accepts only an access token and device-signed DPoP proofs for fixed Pollar endpoints. Pollar verifies signature, token binding, nonce, revocation and replay. Identity and wallet fields come from those authenticated responses. No tokens or proof values are logged or persisted by Encore. Only an explicitly identified Solana devnet wallet is bound. Mainnet, Stellar, unknown-network and unfinished wallets are not silently accepted as devnet wallets.
+Only a provider access token and fresh device-signed proofs are accepted. Identity comes from authenticated fixed Pollar endpoints. The backend supplies the configured application Origin and handles bounded nonce challenges. Transient retries generate new proofs rather than replaying consumed signatures. The live external-only session returns `SDK_WALLET_REQUIRED` from wallet state; the authenticated profile address is accepted only for a confirmed Solana-only testnet app with no conflicting wallet state. Unknown or mainnet wallets are never silently treated as devnet wallets.
 
-The original direct Wallet Standard login remains available when Pollar is not configured; it is not evidence of a live Pollar integration. Live testing may reveal additional provider-specific requirements, which must be documented before this gate is marked complete.
+Native SIWS fallback verifies the exact server-issued message, nonce, address and expiry, consumes challenges once, and rejects altered origins/replay. Browser identity fields cannot create sessions. Production requires persistent storage and a strong session secret. Client mutation endpoints enforce same-origin JSON requests.
 
-## Local verification
+## Validation record
 
-Verified on Node 24.22.3 / pnpm 9.15.0: **23 tests passed, 4 queue tests remain TODO**. This includes nine provider-verification cases and four session-endpoint tests with mocked upstream responses, not live Pollar calls. Import-boundary checks and all five package typechecks passed. The Next.js production build completed successfully (16 generated pages). The setup command passed its local environment checks and reported missing provider configuration. Playwright browser checks have not been run.
+See [test results](../testing/PHASE_ONE_TEST_REPORT.md) and [local toolchain notes](../setup/TOOLCHAIN.md). The reported pass counts exclude four queue TODOs and all deferred provider paths.
 
-## Exit gate
+## Handoff
 
-Do not mark PDF Phase 1 complete until the live integration, test mint/funds/signing and asset permission checks above have evidence. Then continue with PDF Phase 2 (H02–10): artist submission, Music Passports, searchable categories and staging deployment.
+The next PDF phase is **Phase 2, H02–10: registry, catalog and first deployment**. Implement Artist/Track/PassportVersion accounts and authorization/hash/version tests, then artist submission, three authorized categorized tracks, manifest/discovery UI and staging deployment. Queue TODO tests and the full economic/security acceptance suite remain later-phase work. Finish the deferred voice spike before claiming the original Phase 1 exit gate is closed.
