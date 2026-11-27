@@ -1,0 +1,60 @@
+{
+  "services": {
+    "checkedAt": "2026-11-27T16:47:09.510Z",
+    "status": "passed",
+    "checks": {
+      "pollarConfiguration": {
+        "passed": true,
+        "network": "testnet",
+        "chains": [
+          "SOLANA"
+        ],
+        "allowedOrigin": "http://localhost:3000"
+      },
+      "supabasePersistence": {
+        "passed": true,
+        "tables": 6,
+        "independentClientRead": true
+      },
+      "supabaseIsolation": {
+        "passed": true,
+        "anonymousReadStatus": 200,
+        "hiddenRows": true,
+        "anonymousInsertStatus": 401
+      },
+      "firecrawl": {
+        "passed": true,
+        "sourceUrl": "https://github.com/VanshDeo/Encore",
+        "markdownCharacters": 23239,
+        "scope": "Authorized public project page: API feasibility only; not a commissioning lead"
+      },
+      "elevenLabs": {
+        "status": "deferred",
+        "reason": "User explicitly deferred credentials and live session"
+      }
+    }
+  },
+  "pollar": {
+    "checkedAt": "2026-11-27T16:51:59.904Z",
+    "status": "passed",
+    "walletAddress": "2VXLffNhejZKNgeN9dNjG4s7pe8T6bGihQBmVGbTn2vM",
+    "walletType": "external",
+    "method": "Real Pollar SIWS and DPoP verification using a generated test wallet",
+    "socialLogin": "not exercised",
+    "embeddedWalletProvisioning": "not exercised"
+  },
+  "solana": {
+    "checkedAt": "2026-11-27T16:55:19.000Z",
+    "payer": "2VXLffNhejZKNgeN9dNjG4s7pe8T6bGihQBmVGbTn2vM",
+    "cluster": "devnet",
+    "startingLamports": 500000000,
+    "sampleSolTransfer": "62tPe59X8CAh3cCzo9VZhZ84kHoLfudKjE5nizgDGN6KotZJmVobDDGn1kji9rQ9aCDK2rYKmkrXmPPdAPZBg7Zv",
+    "status": "passed",
+    "testMint": "7H5EwCxRKPJ3rsdb88zsv3k8dEroYzYVguGUP9kjdZnP",
+    "decimals": 6,
+    "mintTransaction": "34t7tVZnuHVzG3nn6rQZwU3uKLvBigHA5iVWWcjH525fwQW4Arm3pEypi2n3tLuQ36vzg2marn7DV6Rd1svU6ZQx",
+    "tokenTransfer": "2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW",
+    "tokenAmountSmallestUnits": "1000000",
+    "explorerUrl": "https://explorer.solana.com/tx/2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW?cluster=devnet"
+  }
+}

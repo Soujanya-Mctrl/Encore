@@ -27,7 +27,10 @@ for (const [label, keys] of [
 }
 console.log(`${process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY) ? "CONFIGURED" : "PENDING"} Supabase; migrations and live verification are separate checkpoints.`);
 for (const command of ["cargo", "anchor", "solana", "supabase"]) {
-  const result = spawnSync(command, ["--version"], { encoding: "utf8", timeout: 10_000 });
+  const local = command === "anchor" ? ".local/toolchain/anchor/bin/anchor" :
+    command === "solana" ? ".local/toolchain/solana-release/bin/solana" : command;
+  const executable = existsSync(local) ? local : command;
+  const result = spawnSync(executable, ["--version"], { encoding: "utf8", timeout: 10_000 });
   console.log(`${result.status === 0 ? "AVAILABLE" : "PENDING"} ${command}`);
 }
 console.log("See docs/planning/PHASE_ONE_REPORT.md for evidence required to finish Phase 1.");

@@ -4,7 +4,7 @@ import type { EncoreUser, WalletRecord } from "@encore/core";
 
 export async function exchangePollarSession(client: PollarClient, keys: KeyManager) {
   const nonces: Partial<Record<"profile" | "wallet", string>> = {};
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     const state = client.getAuthState();
     if (state.step !== "authenticated" || !state.verified) throw new Error("Sign in with Pollar first");
     const accessToken = state.session.token.accessToken;
@@ -20,6 +20,12 @@ export async function exchangePollarSession(client: PollarClient, keys: KeyManag
     const body = await response.json().catch(() => ({})) as {
       error?: string; challenge?: { endpoint: string; nonce: string }
     };
+    if ((response.status === 503 || response.status === 429) && attempt < 5) {
+      // A consumed DPoP proof cannot be replayed after a timeout. Start the next
+      // exchange with fresh device signatures instead of retrying the old body.
+      await new Promise((resolve) => setTimeout(resolve, Math.min(200 * 2 ** attempt, 2000)));
+      continue;
+    }
     if (response.status === 401 && body.challenge &&
       ["profile", "wallet"].includes(body.challenge.endpoint) &&
       typeof body.challenge.nonce === "string" && body.challenge.nonce.length <= 2048) {

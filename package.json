@@ -10,7 +10,7 @@
     "dev": "turbo run dev --filter=@encore/web",
     "build": "turbo run build",
     "lint": "node --import tsx scripts/check-boundaries.ts",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p tsconfig.tools.json",
     "test": "vitest run",
     "test:contracts": "anchor test",
     "test:e2e": "node --import tsx scripts/run-playwright.ts",
@@ -25,7 +25,9 @@
     "setup:local": "node --import tsx scripts/bootstrap.ts --init",
     "spike:services": "node --import tsx scripts/spike-services.ts",
     "spike:pollar": "node --import tsx scripts/spike-pollar.ts",
-    "spike:solana": "node --import tsx scripts/spike-solana.ts"
+    "spike:solana": "node --import tsx scripts/spike-solana.ts",
+    "test:rust": "cargo test --locked --manifest-path programs/encore/Cargo.toml",
+    "check:secrets": "node --import tsx scripts/check-secrets.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

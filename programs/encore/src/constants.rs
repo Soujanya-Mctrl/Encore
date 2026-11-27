@@ -1,4 +1,4 @@
 pub const BPS_DENOMINATOR: u64 = 10_000;
 pub const PRIMARY_PLATFORM_FEE_BPS: u64 = 500; // 5%
-pub const RESALE_ARTIST_FEE_BPS: u64 = 1_000;  // 10%
+pub const RESALE_ARTIST_FEE_BPS: u64 = 1_000; // 10%
 pub const RESALE_PLATFORM_FEE_BPS: u64 = 500; // 5%

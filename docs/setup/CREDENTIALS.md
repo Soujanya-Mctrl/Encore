@@ -103,7 +103,7 @@ FIRECRAWL_API_KEY=PASTE_YOUR_API_KEY
 
 Reference: [Firecrawl dashboard and API keys](https://docs.firecrawl.dev/dashboard).
 
-## 6. Solana: Leave Generated Values Blank for Now
+## 6. Solana: Generated Devnet Values
 
 Keep these defaults:
 
@@ -112,15 +112,15 @@ NEXT_PUBLIC_SOLANA_CLUSTER=devnet
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
 ```
 
-Leave `NEXT_PUBLIC_ENCORE_PROGRAM_ID`, `NEXT_PUBLIC_TEST_USDC_MINT`, `REVIEWER_AUTHORITY_PUBKEY`, and `JOB_RUNNER_SECRET` blank for now. They are generated or assigned during subsequent checks; they are not API credentials you obtain from an account dashboard. No private key or seed phrase belongs in `NEXT_PUBLIC_*`.
+The verified spike sets `NEXT_PUBLIC_TEST_USDC_MINT` to the generated demo mint; see the Phase 1 report. Leave `NEXT_PUBLIC_ENCORE_PROGRAM_ID`, `REVIEWER_AUTHORITY_PUBKEY`, and `JOB_RUNNER_SECRET` blank until the corresponding later feature is implemented. These values are generated or assigned, not API credentials obtained from an account dashboard. No private key or seed phrase belongs in `NEXT_PUBLIC_*`.
 
 ## 7. Ready-to-Verify Checklist
 
-- [ ] Pollar test publishable key saved; localhost allowed; Solana test provisioning available.
-- [ ] Supabase project URL and backend secret saved.
-- [ ] ElevenLabs API key and agent ID saved.
-- [ ] Firecrawl API key saved.
-- [ ] Generated `ENCORE_SESSION_SECRET` retained.
+- [x] Pollar test publishable key saved; localhost allowed; external Solana login verified (hosted provisioning remains untested).
+- [x] Supabase project URL and backend secret saved; identity migrations and RLS verified.
+- [ ] ElevenLabs API key and agent ID: explicitly deferred by the user.
+- [x] Firecrawl API key saved; authorized project-page scrape verified.
+- [x] Generated `ENCORE_SESSION_SECRET` retained.
 - [x] Permission for three demo tracks confirmed by the user.
 
-Run `pnpm check:setup` (or `npm exec --yes --package pnpm@9.15.0 -- pnpm run check:setup`). It prints only availability/configuration status, never key values. Tell me **“Credentials added”** when ready. We will then verify the integrations, database, wallet signing, test mint and sample transfer and record the remaining Phase 1 results.
+Run `pnpm check:setup` (or `npm exec --yes --package pnpm@9.15.0 -- pnpm run check:setup`). It prints only availability/configuration status, never key values. Live results and remaining limitations are recorded in the [Phase 1 report](../planning/PHASE_ONE_REPORT.md). The template stays blank for new installations; the completed checklist above describes this workspace on 27 November 2026.
