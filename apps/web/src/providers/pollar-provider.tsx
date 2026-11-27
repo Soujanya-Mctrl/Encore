@@ -10,6 +10,8 @@ import React, {
   useState
 } from "react";
 import { PollarProvider as PollarSdkProvider, usePollar } from "@pollar/react";
+import { WebCryptoKeyManager, type KeyManager, type PollarClientConfig } from "@pollar/core";
+import { exchangePollarSession } from "@/features/auth/exchange-pollar-session";
 import {
   solanaWalletStandardAdapters,
   type SolanaWalletStandardAdapter
@@ -36,13 +38,15 @@ export interface EncoreAuthContextValue {
 const EncoreAuthContext = createContext<EncoreAuthContextValue | null>(null);
 
 function EncoreAuthBridge({
-  pollarConfigured,
+  pollar,
+  keys,
   children
 }: {
-  pollarConfigured: boolean;
+  pollar: ReturnType<typeof usePollar> | null;
+  keys: KeyManager | null;
   children: React.ReactNode;
 }) {
-  const pollar = pollarConfigured ? usePollar() : null;
+  const pollarConfigured = pollar !== null;
   const [user, setUser] = useState<EncoreUser | null>(null);
   const [wallets, setWallets] = useState<WalletRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,62 +88,38 @@ function EncoreAuthBridge({
     }
   }, []);
 
-  // Exchange verified Pollar Web2 session for an Encore HttpOnly session cookie
+  // Exchange only a provider-verified session. Never send identity claims as proof.
+  const authenticated = pollar?.isAuthenticated ?? false;
+  const verified = pollar?.verified ?? false;
+  const providerClient = pollar?.getClient() ?? null;
   useEffect(() => {
-    if (!pollar || !pollar.isAuthenticated || !pollar.verified) return;
-    const client = pollar.getClient();
-    const profile = client.getUserProfile();
-    const pollarWallets = pollar.wallets ?? [];
-    const solWallet = pollarWallets.find((w) => w.chain === "SOLANA") ?? pollar.wallet;
+    if (!authenticated || !verified || !providerClient || !keys) return;
+    const client = providerClient;
+    const state = client.getAuthState();
+    if (state.step !== "authenticated") return;
+    const sessionId = state.session.clientSessionId;
+    if (syncedPollarRef.current === sessionId) return;
+    syncedPollarRef.current = sessionId;
+    let cancelled = false;
+    setLoading(true);
+    void exchangePollarSession(client, keys).then((data) => {
+      if (!cancelled) { setUser(data.user); setWallets(data.wallets); setError(null); }
+    }).catch((err: unknown) => {
+      syncedPollarRef.current = null;
+      if (!cancelled) setError(err instanceof Error ? err.message : "Authentication exchange failed");
+    }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; syncedPollarRef.current = null; };
+  }, [authenticated, verified, providerClient, keys]);
 
-    const provider = profile?.providers.google
-      ? "google"
-      : profile?.providers.github
-        ? "github"
-        : "email";
-    const subject =
-      profile?.providers.google?.id ??
-      profile?.providers.github?.id ??
-      profile?.providers.email?.address ??
-      profile?.mail ??
-      solWallet?.address;
-
-    if (!subject || syncedPollarRef.current === subject) return;
-    syncedPollarRef.current = subject;
-
-    void (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/v1/auth/pollar/session", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            provider,
-            providerSubject: subject,
-            email: profile?.mail || undefined,
-            displayName:
-              [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
-              undefined,
-            avatarUrl: profile?.avatar || undefined,
-            embeddedWalletAddress: solWallet?.address
-          })
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error ?? "Failed to establish Encore session");
-        }
-        const data = (await res.json()) as { user: EncoreUser; wallets: WalletRecord[] };
-        setUser(data.user);
-        setWallets(data.wallets);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Authentication exchange failed");
-      } finally {
+  useEffect(() => {
+    if (!providerClient) return;
+    return providerClient.onAuthStateChange((state) => {
+      if (state.step === "error") {
+        setError("Pollar sign-in failed. Please try again.");
         setLoading(false);
       }
-    })();
-  }, [pollar, pollar?.isAuthenticated, pollar?.verified]);
+    });
+  }, [providerClient]);
 
   const loginWithGoogle = useCallback(() => {
     if (!pollar) {
@@ -166,9 +146,7 @@ function EncoreAuthBridge({
         return;
       }
       setError(null);
-      const client = pollar.getClient();
-      client.beginEmailLogin();
-      client.sendEmailCode(email);
+      pollar.login({ provider: "email", email });
     },
     [pollar]
   );
@@ -187,6 +165,11 @@ function EncoreAuthBridge({
 
   const connectAndSignInSolana = useCallback(
     async (adapter: SolanaWalletStandardAdapter): Promise<boolean> => {
+      if (pollar) {
+        setError(null);
+        pollar.login({ provider: adapter.type });
+        return true;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -237,17 +220,18 @@ function EncoreAuthBridge({
         setLoading(false);
       }
     },
-    []
+    [pollar]
   );
 
   const logout = useCallback(async () => {
     setLoading(true);
     try {
       if (pollar?.isAuthenticated) {
-        pollar.logout();
+        await pollar.getClient().logout();
       }
       syncedPollarRef.current = null;
-      await fetch("/api/v1/auth/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/v1/auth/logout", { method: "POST", credentials: "include",
+        headers: { "content-type": "application/json" }, body: "{}" });
       setUser(null);
       setWallets([]);
     } finally {
@@ -292,17 +276,23 @@ function EncoreAuthBridge({
   return <EncoreAuthContext.Provider value={value}>{children}</EncoreAuthContext.Provider>;
 }
 
+function ConfiguredBridge({ keys, children }: { keys: KeyManager; children: React.ReactNode }) {
+  const pollar = usePollar();
+  return <EncoreAuthBridge pollar={pollar} keys={keys}>{children}</EncoreAuthBridge>;
+}
+
 export function EncorePollarProvider({ children }: { children: React.ReactNode }) {
   const apiKey = process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY;
-  if (!apiKey) {
-    return <EncoreAuthBridge pollarConfigured={false}>{children}</EncoreAuthBridge>;
-  }
-
-  return (
-    <PollarSdkProvider client={{ apiKey }}>
-      <EncoreAuthBridge pollarConfigured={true}>{children}</EncoreAuthBridge>
-    </PollarSdkProvider>
-  );
+  const [config, setConfig] = useState<PollarClientConfig | null>(null);
+  useEffect(() => {
+    if (!apiKey) return;
+    const keyManager = new WebCryptoKeyManager(apiKey);
+    setConfig({ apiKey, keyManager, walletAdapters: solanaWalletStandardAdapters(), confirmation: "prompt" });
+  }, [apiKey]);
+  if (!config?.keyManager) return <EncoreAuthBridge pollar={null} keys={null}>{children}</EncoreAuthBridge>;
+  return <PollarSdkProvider client={config}>
+    <ConfiguredBridge keys={config.keyManager}>{children}</ConfiguredBridge>
+  </PollarSdkProvider>;
 }
 
 export function useEncoreAuth(): EncoreAuthContextValue {

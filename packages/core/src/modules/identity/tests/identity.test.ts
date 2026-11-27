@@ -90,9 +90,9 @@ function createFakeRepo(): UserRepositoryPort & ChallengeRepositoryPort {
       challenges.set(p.nonce, rec);
       return rec;
     },
-    async consumeChallenge(nonce, address, now) {
+    async consumeChallenge(nonce, address, now, message) {
       const rec = challenges.get(nonce);
-      if (!rec || rec.address !== address || rec.consumedAt || rec.expiresAt < now) return null;
+      if (!rec || rec.address !== address || rec.message !== message || rec.consumedAt || rec.expiresAt <= now) return null;
       const consumed = { ...rec, consumedAt: now };
       challenges.set(nonce, consumed);
       return consumed;
@@ -158,6 +158,7 @@ describe("Identity Domain & Policies", () => {
     const clock = { now: () => now };
 
     await repo.createChallenge({
+      message: `Encore login ${VALID_ADDR_2} nonce-1234567890123456`,
       nonce: "nonce-1234567890123456",
       address: VALID_ADDR_2,
       intendedAction: "login",

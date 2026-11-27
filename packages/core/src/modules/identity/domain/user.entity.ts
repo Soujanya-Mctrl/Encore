@@ -34,6 +34,7 @@ export interface WalletRecord {
 }
 
 export interface AuthChallengeRecord {
+  readonly message: string;
   readonly nonce: string;
   readonly address: string;
   readonly intendedAction: "login" | "link_wallet";

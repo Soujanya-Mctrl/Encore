@@ -3,8 +3,11 @@ import { OnboardingProfileSchema } from "@encore/contracts";
 import { completeUserOnboarding } from "@encore/core";
 import { getServerContainer } from "@/server/container";
 import { requireAuthenticatedUser } from "@/server/request-context";
+import { rejectCrossOriginRequest } from "@/server/request-security";
 
 export async function POST(req: Request) {
+  const rejected = rejectCrossOriginRequest(req);
+  if (rejected) return rejected;
   const auth = await requireAuthenticatedUser();
   if (auth.errorResponse) return auth.errorResponse;
 

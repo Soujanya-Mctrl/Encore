@@ -164,7 +164,7 @@ export class SupabaseIdentityRepository
     walletType: WalletType;
     isPrimary: boolean;
   }): Promise<WalletRecord> {
-    const { data, error } = await this.client
+    let { data, error } = await this.client
       .from("wallets")
       .upsert(
         {
@@ -175,12 +175,19 @@ export class SupabaseIdentityRepository
           is_primary: params.isPrimary,
           verified_at: new Date().toISOString()
         },
-        { onConflict: "address" }
+        { onConflict: "address", ignoreDuplicates: true }
       )
       .select("*")
-      .single();
+      .maybeSingle();
+
+    if (!error && !data) {
+      const existing = await this.client.from("wallets").select("*").eq("address", params.address).single();
+      data = existing.data;
+      error = existing.error;
+    }
 
     if (error || !data) throw new Error(error?.message ?? "Failed to persist wallet");
+    if (data.user_id !== params.userId) throw new Error("Wallet belongs to another user");
     return {
       id: data.id,
       userId: data.user_id,
@@ -206,6 +213,7 @@ export class SupabaseIdentityRepository
   }
 
   async createChallenge(params: {
+    message: string;
     nonce: string;
     address: string;
     intendedAction: "login" | "link_wallet";
@@ -214,6 +222,7 @@ export class SupabaseIdentityRepository
     const { data, error } = await this.client
       .from("auth_challenges")
       .insert({
+        message: params.message,
         nonce: params.nonce,
         address: params.address,
         intended_action: params.intendedAction,
@@ -223,6 +232,7 @@ export class SupabaseIdentityRepository
       .single();
     if (error || !data) throw new Error(error?.message ?? "Failed to create challenge");
     return {
+      message: data.message,
       nonce: data.nonce,
       address: data.address,
       intendedAction: data.intended_action as "login" | "link_wallet",
@@ -234,13 +244,15 @@ export class SupabaseIdentityRepository
   async consumeChallenge(
     nonce: string,
     address: string,
-    now: Date
+    now: Date,
+    message: string
   ): Promise<AuthChallengeRecord | null> {
     const { data } = await this.client
       .from("auth_challenges")
       .update({ consumed_at: now.toISOString() })
       .eq("nonce", nonce)
       .eq("address", address)
+      .eq("message", message)
       .is("consumed_at", null)
       .gt("expires_at", now.toISOString())
       .select("*")
@@ -248,6 +260,7 @@ export class SupabaseIdentityRepository
 
     if (!data) return null;
     return {
+      message: data.message,
       nonce: data.nonce,
       address: data.address,
       intendedAction: data.intended_action as "login" | "link_wallet",

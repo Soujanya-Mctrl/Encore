@@ -13,7 +13,9 @@ export class HmacSessionTokenService implements SessionTokenPort {
   constructor(
     private readonly secret: string,
     private readonly ttlSeconds = 7200
-  ) {}
+  ) {
+    if (Buffer.byteLength(secret) < 32) throw new Error("Session secret must contain at least 32 bytes");
+  }
 
   async issueSessionToken(payload: {
     userId: string;
@@ -58,7 +60,9 @@ export class HmacSessionTokenService implements SessionTokenPort {
       const parsed = JSON.parse(
         Buffer.from(body, "base64url").toString("utf8")
       ) as SessionClaims;
-      if (typeof parsed.exp !== "number" || parsed.exp < Math.floor(Date.now() / 1000)) {
+      if (typeof parsed.exp !== "number" || parsed.exp <= Math.floor(Date.now() / 1000) ||
+        typeof parsed.sub !== "string" || !parsed.sub || typeof parsed.sid !== "string" || !parsed.sid ||
+        !Array.isArray(parsed.roles) || !parsed.roles.every((role) => ["listener", "artist", "commercial_buyer", "reviewer", "admin"].includes(role))) {
         return null;
       }
       return {

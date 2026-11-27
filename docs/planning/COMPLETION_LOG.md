@@ -6,7 +6,7 @@
 
 ## 1. Current Project State
 
-- **Current Phase:** `Pre-H00 (Documentation & Architecture Blueprint Locked)`
+- **Current Phase:** `PDF Phase 1 / H00–02 — In Progress (local setup and Pollar implementation; live credentials/checks pending)`
 - **Architecture Style:** `TypeScript Monorepo (pnpm + Turborepo) + Modular Monolith + Single Anchor Program`
 - **PRD Version:** `1.0` (`26 November 2026`)
 - **Code Freeze Target:** `H38` | **Submission Target:** `H43`
@@ -18,7 +18,7 @@
 | Phase | Target Window | Gate Criteria | Status | Completed At | Owner |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Doc & Arch Lock** | Pre-H00 | Wiki `README.md`, `PRD.md`, diagrams, modular monolith blueprint, security & build docs | `Done` | `2026-11-26` | Coordinator |
-| **Gate 1: Spike** | `H00–02` | Pinned versions, devnet funds, test-USDC mint, ElevenLabs session, Pollar test, 3 track clearances | `Pending` | — | A / B / R&Q |
+| **Gate 1: Spike** | `H00–02` | Pinned versions, devnet funds, test-USDC mint, ElevenLabs session, Pollar test, 3 track clearances | `In Progress` | — | A / B / R&Q |
 | **Gate 2: Registry** | `H02–10` | `PassportVersion` on-chain + staging web + 3 searchable categories | `Pending` | — | A / B |
 | **Gate 3: Economy** | `H10–20` | Devnet tip + primary buy → resale → redeem + replay rejection | `Pending` | — | A / B / R&Q |
 | **Gate 4: Voice/Rights** | `H20–30` | Voice → support flow, Firecrawl brief match, appeal version update | `Pending` | — | A / B / R&Q |
@@ -31,7 +31,7 @@
 
 | ID | Requirement | Status | Verification Evidence / Notes |
 | :--- | :--- | :--- | :--- |
-| `FR01` | Artist onboarding & wallet-linked profile | `Not Started` | — |
+| `FR01` | Artist onboarding & wallet-linked profile | `In Progress` | Identity/onboarding code and local tests exist; live provider/database verification and full artist submission pending |
 | `FR02` | Music Passport (canonical hash + versioning) | `Not Started` | — |
 | `FR03` | Review & appeal workflow | `Not Started` | — |
 | `FR04` | Discover, filters & consented playback | `Not Started` | — |

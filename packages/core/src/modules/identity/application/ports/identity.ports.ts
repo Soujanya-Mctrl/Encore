@@ -40,6 +40,7 @@ export interface UserRepositoryPort {
 
 export interface ChallengeRepositoryPort {
   createChallenge(params: {
+    message: string;
     nonce: string;
     address: string;
     intendedAction: "login" | "link_wallet";
@@ -48,7 +49,8 @@ export interface ChallengeRepositoryPort {
   consumeChallenge(
     nonce: string,
     address: string,
-    now: Date
+    now: Date,
+    message: string
   ): Promise<AuthChallengeRecord | null>;
 }
 
@@ -71,4 +73,21 @@ export interface SessionTokenPort {
     roles: readonly UserRole[];
     sessionId: string;
   } | null>;
+}
+
+export interface VerifiedExternalIdentity {
+  provider: AuthProvider;
+  providerSubject: string;
+  displayName: string;
+  avatarUrl?: string;
+  walletAddress?: string;
+  walletType?: WalletType;
+}
+
+export interface ExternalIdentityVerifierPort {
+  verify(proof: {
+    accessToken: string;
+    profileProof: string;
+    walletProof: string;
+  }): Promise<VerifiedExternalIdentity>;
 }
