@@ -6,6 +6,8 @@
 
 ---
 
+Open the [connected phase roadmap](../diagrams/architecture/phases/index.html) for the finer-grained P00–P15 sequence, phase dependencies, and linked architecture, UI, and testing flows. This document groups the same delivery work into larger batches.
+
 ## Phase Schedule & Exit Gates
 
 | Window | Builder A (Contracts & Chain) | Builder B (Web, Data & AI) | Research / QA | Exit Gate |

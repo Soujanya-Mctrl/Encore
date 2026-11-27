@@ -4,6 +4,7 @@ The HTML documents are self-contained. Download an HTML file and open it in a br
 
 | Blueprint | Preview | Scope |
 | --- | --- | --- |
+| [Connected phase roadmap](phases/index.html) | [Light](phases/phase-roadmap.png) · [Dark](phases/phase-roadmap-dark.png) | P00–P15 dependencies, with [architecture](phases/architecture.html), [UI](phases/ui-flows.html), and [testing](phases/testing-flows.html) diagrams for each phase |
 | [MVP system](encore-mvp-architecture.html) | [Light](encore-topology.png) · [Dark](encore-topology-dark.png) | Expo Android and web target, shared Next.js modular monolith, Music Passport, and original supporter pass model |
 | [Expo and Artist Studio](Encore_Expo_Stack_Diagrams.html) | [Integration plan](../../architecture/Encore_Artist_Studio_Architecture.md) | Eight views covering sessions, scoped creator access, data, uploads, publication, and playback |
 | [Project-share marketplace](encore-support-marketplace-architecture.html) | [Overview](encore-support-marketplace-overview.png) · [Sample trading screen](encore-sample-trading-screen.png) | Campaign escrow, project-specific shares, spot resale, and simulated revenue distribution |
