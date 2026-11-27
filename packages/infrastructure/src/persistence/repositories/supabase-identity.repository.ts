@@ -50,6 +50,32 @@ export class SupabaseIdentityRepository
     };
   }
 
+  async findStudioChannelForUser(userId: string) {
+    const { data, error } = await this.client
+      .rpc("encore_studio_channel_for_user", { p_user_id: userId })
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+    const row = data as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      handle: row.handle as string,
+      displayName: row.display_name as string,
+      role: row.role as "owner" | "editor"
+    };
+  }
+
+  async listReviewAssignmentsForUser(userId: string) {
+    const { data, error } = await this.client
+      .rpc("encore_review_assignments_for_user", { p_user_id: userId });
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+      id: row.id as string,
+      channelId: row.channel_id as string,
+      createdAt: row.created_at as string
+    }));
+  }
+
   async findUserByIdentity(
     provider: AuthProvider,
     providerSubject: string
@@ -210,6 +236,7 @@ export class SupabaseIdentityRepository
     address: string;
     intendedAction: "login" | "link_wallet";
     expiresAt: Date;
+    messageDigest: string;
   }): Promise<AuthChallengeRecord> {
     const { data, error } = await this.client
       .from("auth_challenges")
@@ -217,6 +244,7 @@ export class SupabaseIdentityRepository
         nonce: params.nonce,
         address: params.address,
         intended_action: params.intendedAction,
+        message_digest: params.messageDigest,
         expires_at: params.expiresAt.toISOString()
       })
       .select("*")
@@ -226,6 +254,7 @@ export class SupabaseIdentityRepository
       nonce: data.nonce,
       address: data.address,
       intendedAction: data.intended_action as "login" | "link_wallet",
+      messageDigest: data.message_digest,
       expiresAt: new Date(data.expires_at),
       consumedAt: data.consumed_at ? new Date(data.consumed_at) : null
     };
@@ -234,13 +263,17 @@ export class SupabaseIdentityRepository
   async consumeChallenge(
     nonce: string,
     address: string,
-    now: Date
+    now: Date,
+    messageDigest: string,
+    intendedAction: "login" | "link_wallet"
   ): Promise<AuthChallengeRecord | null> {
     const { data } = await this.client
       .from("auth_challenges")
       .update({ consumed_at: now.toISOString() })
       .eq("nonce", nonce)
       .eq("address", address)
+      .eq("message_digest", messageDigest)
+      .eq("intended_action", intendedAction)
       .is("consumed_at", null)
       .gt("expires_at", now.toISOString())
       .select("*")
@@ -251,6 +284,7 @@ export class SupabaseIdentityRepository
       nonce: data.nonce,
       address: data.address,
       intendedAction: data.intended_action as "login" | "link_wallet",
+      messageDigest: data.message_digest,
       expiresAt: new Date(data.expires_at),
       consumedAt: data.consumed_at ? new Date(data.consumed_at) : null
     };

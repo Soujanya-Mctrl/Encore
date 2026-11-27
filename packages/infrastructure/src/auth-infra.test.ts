@@ -23,6 +23,8 @@ describe("Authentication Infrastructure", () => {
       sessionId: "sess-1"
     });
 
+    expect(await svc.verifySessionToken(token.split(".").slice(1).join("."))).toBeNull();
+
     const tampered = `${token.slice(0, -2)}xx`;
     expect(await svc.verifySessionToken(tampered)).toBeNull();
   });

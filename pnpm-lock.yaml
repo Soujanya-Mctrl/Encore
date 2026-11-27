@@ -129,7 +129,7 @@ importers:
         version: 1.95.8(bufferutil@4.2.0)(utf-8-validate@6.1.0)
       '@supabase/supabase-js':
         specifier: 2.47.10
-        version: 2.47.10(bufferutil@4.2.0)(utf-8-validate@6.1.0)
+        version: 2.47.10(bufferutil@4.2.0)
     devDependencies:
       '@encore/config':
         specifier: workspace:*
@@ -137,6 +137,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.7)
 
   packages/solana-client:
     devDependencies:
@@ -2377,7 +2380,7 @@ snapshots:
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
-  '@supabase/realtime-js@2.11.2(bufferutil@4.2.0)(utf-8-validate@6.1.0)':
+  '@supabase/realtime-js@2.11.2(bufferutil@4.2.0)':
     dependencies:
       '@supabase/node-fetch': 2.6.15
       '@types/phoenix': 1.6.8
@@ -2391,13 +2394,13 @@ snapshots:
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
-  '@supabase/supabase-js@2.47.10(bufferutil@4.2.0)(utf-8-validate@6.1.0)':
+  '@supabase/supabase-js@2.47.10(bufferutil@4.2.0)':
     dependencies:
       '@supabase/auth-js': 2.67.3
       '@supabase/functions-js': 2.4.4
       '@supabase/node-fetch': 2.6.15
       '@supabase/postgrest-js': 1.17.7
-      '@supabase/realtime-js': 2.11.2(bufferutil@4.2.0)(utf-8-validate@6.1.0)
+      '@supabase/realtime-js': 2.11.2(bufferutil@4.2.0)
       '@supabase/storage-js': 2.7.1
     transitivePeerDependencies:
       - bufferutil
