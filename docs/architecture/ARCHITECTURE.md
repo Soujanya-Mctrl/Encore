@@ -1,6 +1,8 @@
 # System Architecture & Modular Monolith Blueprint
 
-![System Architecture](../diagrams/03_architecture.png)
+![System topology](../diagrams/architecture/encore-topology.png)
+
+Expo Router is the planned browser and Android frontend. Both clients use the existing Next.js API. Expo Web export and Android sign-in are integration gates. See the [Expo and Artist Studio diagrams](../diagrams/architecture/Encore_Expo_Stack_Diagrams.html) for sessions, channel access, review, and playback.
 
 > **Locked Architecture Decision:** **TypeScript Monorepo (`pnpm Workspaces + Turborepo`)** containing a **modular monolithic application** (`apps/web` + `packages/core` + `packages/infrastructure`), a **single modular Solana Anchor program** (`programs/encore`), and shared contracts/clients. No microservices, Kubernetes, Redis, or Kafka for the 48-hour MVP.
 
@@ -11,12 +13,12 @@
 ```mermaid
 flowchart TD
     subgraph S1["Layer 1: Client & Voice Interfaces (Vercel)"]
-        Web["apps/web: Next.js App Router, Tailwind, shadcn/ui, Zustand + TanStack Query, WaveSurfer.js"]
+        Web["Target: Expo Router · Android and responsive web"]
         Wallet["Pollar SDK + Solana Wallet Standard Fallback"]
         Agent["ElevenLabs Conversational Agent (Read-Only Tools + Unsigned Intent)"]
     end
     subgraph S2["Layer 2: Modular Monolith Backend & Composition Root"]
-        API["Next.js Route Handlers (/api/v1/*) + server/container.ts"]
+        API["Existing shared Next.js API (/api/v1/*) and session boundary"]
         Core["packages/core: 13 DDD Business Modules + Kernel (Zero Infra Imports)"]
         Contracts["packages/contracts: Zod Schemas, API DTOs, Events, Enums"]
     end
