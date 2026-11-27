@@ -46,6 +46,8 @@ Browse the full knowledge base in [`docs/WIKI.md`](docs/WIKI.md) or jump directl
 
 ## Architecture at a Glance
 
+Open the [architecture diagram gallery](docs/diagrams/architecture/README.md) for the system blueprint and marketplace proposals.
+
 **Pattern:** TypeScript monorepo (`pnpm Workspaces + Turborepo`) containing a **modular monolithic application** (`apps/web` + `packages/core` + `packages/infrastructure`), a **single modular Solana Anchor program** (`programs/encore`), and shared contracts/clients.
 
 ```mermaid
