@@ -2,8 +2,11 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { SiwsChallengeRequestSchema } from "@encore/contracts";
 import { getServerContainer } from "@/server/container";
+import { rejectCrossOriginRequest } from "@/server/request-security";
 
 export async function POST(req: Request) {
+  const rejected = rejectCrossOriginRequest(req);
+  if (rejected) return rejected;
   const body = await req.json().catch(() => null);
   const parsed = SiwsChallengeRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -18,15 +21,8 @@ export async function POST(req: Request) {
   const issuedAt = clock.now();
   const expiresAt = new Date(issuedAt.getTime() + 5 * 60 * 1000);
 
-  await challenges.createChallenge({
-    nonce,
-    address: parsed.data.address,
-    intendedAction: parsed.data.intendedAction,
-    expiresAt
-  });
-
   const message = [
-    "Encore wants you to sign in with your Solana account:",
+    `${new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").host} wants you to sign in with your Solana account:`,
     parsed.data.address,
     "",
     `Action: ${parsed.data.intendedAction}`,
@@ -35,6 +31,9 @@ export async function POST(req: Request) {
     `Issued At: ${issuedAt.toISOString()}`,
     `Expiration Time: ${expiresAt.toISOString()}`
   ].join("\n");
+
+  await challenges.createChallenge({ nonce, message, address: parsed.data.address,
+    intendedAction: parsed.data.intendedAction, expiresAt });
 
   return NextResponse.json({
     nonce,

@@ -15,7 +15,7 @@
 - **What it solves:** Listeners struggle to tell how music was made (human, AI-assisted, or AI-generated) and independent creators struggle to earn sustainable income, while binary AI labels or opaque detectors fail both groups.
 - **P0 Differentiator:** One track-specific **Music Passport** (canonical manifest hash + versioned history on Solana) that powers discovery, ElevenLabs voice explanations, direct test-USDC tips, redeemable Supporter Passes, and a non-destructive appeal workflow.
 - **Fairness Principle:** Human-created, AI-assisted, and AI-generated tracks are all welcome with valid permissions. **Missing evidence is not an AI label.** Origin labels never algorithmically penalize creator payouts.
-- **Current Status:** `Proposed` — complete PRD, architecture, economics, and 48-hour build playbook are documented; implementation starts at `H00`.
+- **Current Status:** `PDF Phase 1 — In Progress` — workspace and authentication code exist; live credentials and feasibility checks are pending. Start with [credential setup](docs/setup/CREDENTIALS.md) and the [Phase 1 report](docs/planning/PHASE_ONE_REPORT.md).
 
 ---
 
@@ -99,10 +99,10 @@ docs/                  Categorized project wiki, specs, audit/completion logs, a
 
 ## Quick Start & Root Commands (Target Contract)
 
-> *Note: Repository is currently in documentation/planning phase (`H00`). Commands below define the target root `package.json` contract from the modular monolith blueprint.*
+> Run `pnpm setup:local` to create `apps/web/.env.local` without overwriting an existing file. See [credential setup](docs/setup/CREDENTIALS.md). Contract/deployment/demo commands remain later-phase targets; their presence does not mean those features are implemented.
 
 1. **Prerequisites:** Node.js (LTS), `pnpm`, Rust + Solana CLI + Anchor CLI (pinned during `H00–02` spike), Supabase CLI.
-2. **Environment:** Copy `.env.example` to `.env.local` (never commit secrets, seed phrases, or Supabase service-role keys).
+2. **Environment:** Run `pnpm setup:local` to create `apps/web/.env.local` (never commit secrets, seed phrases, or Supabase service-role keys).
 3. **Core Commands:**
    - `pnpm dev` / `pnpm build` — Run or build the Turborepo workspace
    - `pnpm lint` / `pnpm typecheck` — Lint, module-boundary checks, and TypeScript validation

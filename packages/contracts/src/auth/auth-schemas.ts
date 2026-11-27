@@ -40,13 +40,15 @@ export const SiwsVerifyRequestSchema = z.object({
 });
 
 export const PollarSessionExchangeSchema = z.object({
-  provider: z.enum(["google", "email", "github"]),
-  providerSubject: z.string().min(1),
-  email: z.string().email().optional(),
-  displayName: z.string().min(1).max(80).optional(),
-  avatarUrl: z.string().url().optional(),
-  embeddedWalletAddress: SolanaAddressSchema.optional()
-});
+  accessToken: z.string().min(1).max(16384),
+  profileProof: z.string().min(1).max(8192),
+  walletProof: z.string().min(1).max(8192)
+}).strict();
+
+// Fixed upstream targets: the browser cannot choose a URL for server-side fetches.
+export const POLLAR_PROFILE_URL = "https://sdk.api.pollar.xyz/v3/auth/session/resume";
+export const POLLAR_WALLET_URL = "https://sdk.api.pollar.xyz/v3/wallet/state";
+export const POLLAR_CONFIG_URL = "https://sdk.api.pollar.xyz/v3/applications/config";
 
 export const OnboardingProfileSchema = z.object({
   displayName: z.string().trim().min(2).max(60),

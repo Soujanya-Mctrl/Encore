@@ -36,7 +36,8 @@ export async function verifyWalletChallenge(
   const consumed = await challenges.consumeChallenge(
     params.nonce,
     params.address,
-    clock.now()
+    clock.now(),
+    params.message
   );
   if (!consumed) {
     return err(new Error("Challenge expired, missing, or already consumed"));

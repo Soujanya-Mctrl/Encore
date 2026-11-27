@@ -4,7 +4,6 @@
   "private": true,
   "exports": {
     "./typescript/base.json": "./typescript/base.json",
-    "./eslint/boundary.mjs": "./eslint/boundary.mjs",
-    "./env": "./env/index.ts"
+    "./eslint/boundary.mjs": "./eslint/boundary.mjs"
   }
 }

@@ -121,12 +121,14 @@ export class InMemoryIdentityRepository
   }
 
   async createChallenge(params: {
+    message: string;
     nonce: string;
     address: string;
     intendedAction: "login" | "link_wallet";
     expiresAt: Date;
   }): Promise<AuthChallengeRecord> {
     const record: AuthChallengeRecord = {
+      message: params.message,
       nonce: params.nonce,
       address: params.address,
       intendedAction: params.intendedAction,
@@ -140,13 +142,15 @@ export class InMemoryIdentityRepository
   async consumeChallenge(
     nonce: string,
     address: string,
-    now: Date
+    now: Date,
+    message: string
   ): Promise<AuthChallengeRecord | null> {
     const record = this.challenges.get(nonce);
     if (!record) return null;
     if (record.address !== address) return null;
+    if (record.message !== message) return null;
     if (record.consumedAt !== null) return null;
-    if (record.expiresAt.getTime() < now.getTime()) return null;
+    if (record.expiresAt.getTime() <= now.getTime()) return null;
 
     const consumed: AuthChallengeRecord = {
       ...record,
