@@ -15,8 +15,12 @@ export default function SupportCheckout() {
   const [customAmount, setCustomAmount] = useState('')
   const track = tracks.find((item) => item.id === id)
   const entered = amount === 'custom' ? customAmount.trim() : String(amount)
-  const valid = /^(?:[1-9]\d{0,5})(?:\.\d{1,6})?$/.test(entered)
-  const displayAmount = valid ? Number(entered).toFixed(2) : '—'
+  const [whole, fraction = ''] = entered.split('.')
+  const units = /^(?:0|[1-9]\d{0,5})(?:\.\d{1,6})?$/.test(entered)
+    ? BigInt(whole + fraction.padEnd(6, '0'))
+    : 0n
+  const valid = units > 0n
+  const displayAmount = valid ? `${whole}.${fraction.padEnd(2, '0')}` : '—'
 
   if (!track) return <View style={{ flex: 1, backgroundColor: c.bg, padding: 24 }}><Text style={{ color: c.ink }}>Track not found.</Text></View>
 

@@ -56,7 +56,8 @@ function getDateKey(blockTime: WalletActivityTransaction['blockTime']) {
     return 'unknown'
   }
 
-  return new Date(Number(blockTime) * 1000).toISOString().slice(0, 10)
+  const date = new Date(Number(blockTime) * 1000)
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
 function groupTransactionsByDate(transactions: readonly WalletActivityTransaction[]) {
