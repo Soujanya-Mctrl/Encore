@@ -8,11 +8,13 @@ describe("Cookie-authenticated mutation requests", () => {
       method: "POST", headers: { origin: "http://localhost:3000", "content-type": "application/json" }
     }))).toBeNull();
   });
-  it.each([
+  const invalidHeaders: Record<string, string>[] = [
     { origin: "https://other.example", "content-type": "application/json" },
     { origin: "http://localhost:3000", "content-type": "text/plain" },
     { "content-type": "application/json" }
-  ])("rejects missing/wrong origin or a form-compatible media type", (headers) => {
+  ];
+
+  it.each(invalidHeaders)("rejects missing/wrong origin or a form-compatible media type", (headers) => {
     expect(rejectCrossOriginRequest(new Request("http://localhost:3000/api", { method: "POST", headers }))?.status).toBe(403);
   });
 });
