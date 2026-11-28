@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type {
   ChallengeRepositoryPort,
   ClockPort,
@@ -7,6 +8,9 @@ import type {
 } from "@encore/core";
 import {
   HmacSessionTokenService,
+  InMemoryActiveSessions,
+  SupabaseActiveSessions,
+  type ActiveSessions,
   InMemoryIdentityRepository,
   NodeEd25519Verifier,
   SupabaseIdentityRepository
@@ -17,6 +21,7 @@ export interface ServerContainer {
   readonly users: UserRepositoryPort;
   readonly challenges: ChallengeRepositoryPort;
   readonly verifier: SignatureVerifierPort;
+  readonly activeSessions: ActiveSessions;
   readonly sessions: SessionTokenPort;
   readonly clock: ClockPort;
 }
@@ -32,14 +37,26 @@ export function getServerContainer(): ServerContainer {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const sessionSecret =
-    process.env.ENCORE_SESSION_SECRET || "encore-devnet-ephemeral-session-secret-change-me";
+  const configuredSessionSecret = process.env.ENCORE_SESSION_SECRET?.trim();
+  if (
+    process.env.NODE_ENV === "production" &&
+    (!configuredSessionSecret || configuredSessionSecret.length < 32)
+  ) {
+    throw new Error("ENCORE_SESSION_SECRET must be at least 32 characters in production");
+  }
+  const sessionSecret = configuredSessionSecret || randomBytes(32).toString("base64url");
 
   let repo: UserRepositoryPort & ChallengeRepositoryPort;
+  if (process.env.NODE_ENV === "production" && (!supabaseUrl || !serviceRoleKey)) {
+    throw new Error("Persistent identity and session storage is required in production");
+  }
+  let activeSessions: ActiveSessions;
   if (supabaseUrl && serviceRoleKey) {
     repo = new SupabaseIdentityRepository(supabaseUrl, serviceRoleKey);
+    activeSessions = new SupabaseActiveSessions(supabaseUrl, serviceRoleKey);
   } else {
     repo = new InMemoryIdentityRepository();
+    activeSessions = new InMemoryActiveSessions();
   }
 
   const container: ServerContainer = {
@@ -47,6 +64,7 @@ export function getServerContainer(): ServerContainer {
     users: repo,
     challenges: repo,
     verifier: new NodeEd25519Verifier(),
+    activeSessions,
     sessions: new HmacSessionTokenService(sessionSecret),
     clock: { now: () => new Date() }
   };
