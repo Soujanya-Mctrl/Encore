@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ORIGIN_CATEGORIES } from "./enums/provenance.js";
+import { EVIDENCE_STATUSES, ORIGIN_CATEGORIES } from "./enums/provenance.js";
+import type { RightsCapabilities } from "./rights.js";
 import type { MusicPassportManifest } from "./schemas/manifest.js";
 export const ReleaseInputSchema = z
   .object({
@@ -50,10 +51,15 @@ export interface StudioTrack {
   createdAt: string;
   anchorSignature: string | null;
 }
+export type DiscoveryTrack = StudioTrack & { rights: RightsCapabilities };
+export interface DiscoveryResult { tracks: DiscoveryTrack[]; total: number }
+export interface PreviewSource { url: string; expiresAt: string }
+
 export const CatalogQuerySchema = z.object({
   q: z.string().trim().max(120).default(""),
   origin: z.enum(ORIGIN_CATEGORIES).optional(),
-  genre: z.string().max(60).optional(),
+  genre: z.string().trim().max(60).optional(),
+  evidence: z.enum(EVIDENCE_STATUSES).optional(),
   page: z.coerce.number().int().min(1).max(10000).default(1),
 });
 export type CatalogQuery = z.infer<typeof CatalogQuerySchema>;

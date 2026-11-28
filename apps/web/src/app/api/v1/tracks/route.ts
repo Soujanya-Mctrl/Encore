@@ -1,3 +1,4 @@
+import { searchDiscovery } from "@/server/discovery";
 import { NextResponse } from "next/server";
 import {
   CatalogQuerySchema,
@@ -9,17 +10,11 @@ import { catalogResponse } from "@/server/catalog-http";
 import { requireAuthenticatedUser } from "@/server/request-context";
 export async function GET(req: Request) {
   const q = CatalogQuerySchema.safeParse(
-    Object.fromEntries(new URL(req.url).searchParams),
+    Object.fromEntries([...new URL(req.url).searchParams].filter(([, value]) => value !== "")),
   );
   if (!q.success)
     return NextResponse.json({ error: "Invalid filters" }, { status: 400 });
-  return catalogResponse(async () => {
-    const result = await catalog().repo.search(q.data);
-    return {
-      ...result,
-      tracks: result.tracks.map(({ audioPath, ...track }) => track),
-    };
-  });
+  return catalogResponse(() => searchDiscovery(q.data));
 }
 export async function POST(req: Request) {
   const origin = new URL(

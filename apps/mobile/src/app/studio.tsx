@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMobileWallet } from '@wallet-ui/react-native-kit'
 import { Link, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { tracks } from '@/features/encore/fixtures'
 import { encoreColors as c } from '@/features/encore/ui/tokens'
 
 export default function ArtistStudio() {
@@ -44,24 +43,11 @@ export default function ArtistStudio() {
         <Text style={{ color: c.muted, textAlign: 'center', lineHeight: 20 }}>When your wallet owns a published passport, its status, version history, and revenue will appear here.</Text>
       </View>
     </View>
-    <View style={{ gap: 10 }}>
-      <Text style={{ color: c.ink, fontSize: 20, fontWeight: '700' }}>Passport preview</Text>
-      <Text style={{ color: c.muted }}>Explore a sample release to see how origin, evidence, and rights stay separate.</Text>
-      {tracks.slice(0, 2).map((track) => (
-        <Link key={track.id} href={`/track/${track.id}`} asChild>
-          <Pressable style={{ backgroundColor: c.white, borderColor: c.border, borderWidth: 1, borderRadius: 18, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: track.color, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border }}>
-              <Text style={{ color: '#fff', fontSize: 24 }}>♫</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: c.ink, fontWeight: '700' }}>{track.title}</Text>
-              <Text style={{ color: c.muted }}>{track.artist} · Sample</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={19} color={c.muted} />
-          </Pressable>
-        </Link>
-      ))}
-    </View>
+    <Link href="/rights" asChild>
+      <Pressable style={{ minHeight: 44, justifyContent: 'center' }}>
+        <Text style={{ color: c.berry, fontWeight: '700' }}>Manage rights and licensing</Text>
+      </Pressable>
+    </Link>
     <View style={{ backgroundColor: c.oat, borderRadius: 18, borderWidth: 1, borderColor: c.border, padding: 16, gap: 7 }}>
       <Text style={{ color: c.ink, fontWeight: '700' }}>Release editor & appeals</Text>
       <Text style={{ color: c.muted, lineHeight: 20 }}>Submission, evidence upload, version signing, and appeal tracking will become available when artist APIs are connected. No changes can be submitted from this preview.</Text>

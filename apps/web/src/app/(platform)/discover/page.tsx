@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { getAuthenticatedUser } from "@/server/request-context";
-import { catalog } from "@/server/catalog";
-import { CatalogQuerySchema, ORIGIN_CATEGORIES } from "@encore/contracts";
+import { searchDiscovery } from "@/server/discovery";
+import { PlayPreview } from "@/features/player/player";
+import { CatalogQuerySchema, EVIDENCE_STATUSES, ORIGIN_CATEGORIES } from "@encore/contracts";
 export const dynamic = "force-dynamic";
 export default async function Discover({
   searchParams,
@@ -17,7 +18,7 @@ export default async function Discover({
   let result;
   let failed = false;
   try {
-    result = await catalog().repo.search(query);
+    result = await searchDiscovery(query);
   } catch {
     failed = true;
   }
@@ -31,6 +32,7 @@ export default async function Discover({
         <Link href="/">ENCORE</Link>
         <div className="flex flex-wrap items-center gap-4">
           <Link href={href}>{label}</Link>
+          {user && <Link href="/rights">Rights workspace</Link>}
           {user && <SignOutButton />}
         </div>
       </nav>
@@ -57,6 +59,10 @@ export default async function Discover({
           {ORIGIN_CATEGORIES.map((o) => (
             <option key={o}>{o}</option>
           ))}
+        </select>
+        <select aria-label="Evidence status" name="evidence" defaultValue={"evidence" in query ? query.evidence ?? "" : ""} className="bg-slate-800 rounded p-3">
+          <option value="">All evidence statuses</option>
+          {EVIDENCE_STATUSES.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
         </select>
         <input
           aria-label="Genre"
@@ -90,11 +96,12 @@ export default async function Discover({
                   {t.artistName} · {t.genre}
                 </p>
                 <p className="text-slate-400 text-sm my-3">
-                  {t.manifest.evidenceStatus} · {t.manifest.rightsStatus}
+                  {t.manifest.evidenceStatus} · {t.rights.preview ? "Preview permitted" : t.rights.externalUrl ? "External licensing" : "Metadata only"}
                 </p>
-                <Link href={`/tracks/${t.id}`} className="text-violet-300">
-                  Listen & view Music Passport →
-                </Link>
+                <div className="flex flex-wrap items-center gap-3">
+                  <PlayPreview track={t} queue={result.tracks} />
+                  <Link href={`/tracks/${t.id}`} className="text-violet-300">Music Passport</Link>
+                </div>
               </article>
             ))}
           </section>
