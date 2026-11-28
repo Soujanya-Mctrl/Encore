@@ -16,6 +16,7 @@ export const MusicPassportManifestSchema = z.object({
   originCategory: z.enum(ORIGIN_CATEGORIES),
   evidenceStatus: z.enum(EVIDENCE_STATUSES),
   rightsStatus: z.enum(RIGHTS_STATUSES),
+  generationEvidenceHash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   contributions: z.array(ContributionSchema).min(1)
 });
 

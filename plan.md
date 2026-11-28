@@ -23,6 +23,8 @@ Do not renumber later phases or mark the original Phase 1 gate fully closed whil
 
 ### ElevenLabs Music Generation (`FR05b` — Phase 4 Studio Integration)
 
+See [ElevenLabs Studio Music Generation Spec](docs/integrations/ELEVENLABS_MUSIC_GENERATION.md) for full sequence diagrams and invariants.
+
 - **Scope:** Creators can generate original audio drafts directly inside **Artist Studio** via ElevenLabs Music API (`ELEVENLABS_API_KEY` server-side only), store the output + generation receipt in private Supabase Storage, and prefill a `PassportVersion` draft.
 - **Provenance & Rights Invariants:** Platform-attested ElevenLabs generations set `OriginCategory` to `AI_GENERATED` (or `AI_ASSISTED` if mixed with human stems), `EvidenceStatus` to `CORROBORATED` (backed by the ElevenLabs generation receipt), and `RightsStatus` gated by the ElevenLabs plan/Music Terms (`PREVIEW_ALLOWED` / `COMMERCIAL_CLEARED` or `RESTRICTED` — never reselling ElevenLabs Music Marketplace licenses).
 - **Architecture:** `MusicGenerationPort` in `packages/core` → `ElevenLabsMusicAdapter` in `packages/infrastructure` → `POST /api/v1/studio/generate-music` in `apps/web` → Artist Studio generation UI in `apps/mobile`.

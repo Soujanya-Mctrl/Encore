@@ -10,7 +10,8 @@ Welcome to the **Encore** project knowledge base. Every document here is derived
 1. Start with [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) for the monorepo layout, Postgres schema, API routes, and agent tool boundaries.
 2. Read [`architecture/ANCHOR_PROGRAM_SPEC.md`](architecture/ANCHOR_PROGRAM_SPEC.md) for exact PDA seeds, instruction signatures, and invariants.
 3. Check [`architecture/TECHNICAL_FEASIBILITY.md`](architecture/TECHNICAL_FEASIBILITY.md) for sponsor SDK caveats (Pollar, ElevenLabs, Firecrawl) and fallback rules.
-4. Follow [`planning/BUILD_PLAN_48H.md`](planning/BUILD_PLAN_48H.md) and update [`planning/COMPLETION_LOG.md`](planning/COMPLETION_LOG.md) at each phase gate (`H02`, `H10`, `H20`, `H30`, `H38`, `H43`).
+4. Read [`integrations/POLLAR.md`](integrations/POLLAR.md) for Pollar auth/wallet integration and [`integrations/ELEVENLABS_MUSIC_GENERATION.md`](integrations/ELEVENLABS_MUSIC_GENERATION.md) for the planned ElevenLabs Studio music generation (`FR05b`) architecture.
+5. Follow [`planning/BUILD_PLAN_48H.md`](planning/BUILD_PLAN_48H.md) and update [`planning/COMPLETION_LOG.md`](planning/COMPLETION_LOG.md) at each phase gate (`H02`, `H10`, `H20`, `H30`, `H38`, `H43`).
 
 ### For Research, QA, Legal & Design
 1. Read [`product/PRODUCT_DESIGN.md`](product/PRODUCT_DESIGN.md) for personas, `FR01`–`FR11` acceptance criteria, visual identity, and the 3-minute demo script.

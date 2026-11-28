@@ -2,6 +2,7 @@ import type {
   ReleaseInput,
   CatalogQuery,
   MusicPassportManifest,
+  MusicGenerationEvidence,
 } from "@encore/contracts";
 export type ReleaseState =
   | "draft"
@@ -79,19 +80,25 @@ export class CatalogService {
     input: ReleaseInput,
     bytes: Uint8Array,
     releaseId?: string,
+    generationEvidence?: MusicGenerationEvidence,
   ): Promise<Release> {
     const { durationSeconds } = this.audio.inspect(bytes);
     const id = releaseId ?? this.id();
     const filename = releaseId ? `preview-${this.id()}.mp3` : "preview.mp3";
     const path = `${artistId}/${id}/${filename}`;
     const audioHash = this.digest.bytes(bytes);
+    if (generationEvidence && generationEvidence.audioHash !== audioHash) {
+      throw new CatalogError("Generated audio does not match its evidence", 409);
+    }
     // Category is an artist claim. Evidence and rights remain separate and are never auto-promoted.
     const manifest: MusicPassportManifest = {
       trackId: id,
       version: 1,
       previousHash: null,
-      originCategory: input.originCategory,
-      evidenceStatus: input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
+      originCategory: generationEvidence ? "AI_GENERATED" : input.originCategory,
+      evidenceStatus: generationEvidence ? "CORROBORATED" :
+        input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
+      ...(generationEvidence && { generationEvidenceHash: this.digest.hash(generationEvidence) }),
       rightsStatus: "PREVIEW_ALLOWED",
       contributions: input.contributions,
     };
@@ -151,9 +158,10 @@ export class CatalogService {
       ...r.manifest,
       version: expectedVersion + 1,
       previousHash: r.manifestHash,
-      originCategory: input.originCategory,
+      originCategory: r.manifest.generationEvidenceHash ? r.manifest.originCategory : input.originCategory,
       contributions: input.contributions,
-      evidenceStatus: input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
+      evidenceStatus: r.manifest.generationEvidenceHash ? r.manifest.evidenceStatus :
+        input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
     };
     await this.repo.append(
       id,

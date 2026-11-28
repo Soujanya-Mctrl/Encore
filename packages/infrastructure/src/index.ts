@@ -16,3 +16,5 @@ export * from "./catalog/media.js";
 export * from "./catalog/supabase-catalog.js";
 
 export * from "./catalog/registry.js";
+export { ElevenLabsMusic, lyricSections } from "./music/elevenlabs-music.js";
+export { audioDigest, fingerprintAudio, fingerprintMatch } from "./music/audio-matching.js";

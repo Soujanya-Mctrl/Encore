@@ -11,13 +11,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "3.25.76",
+    "@elevenlabs/elevenlabs-js": "2.80.0",
     "@encore/contracts": "workspace:*",
     "@encore/core": "workspace:*",
     "@encore/solana-client": "workspace:*",
     "@pollar/core": "0.12.0",
     "@solana/web3.js": "1.95.8",
-    "@supabase/supabase-js": "2.47.10"
+    "@supabase/supabase-js": "2.47.10",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@encore/config": "workspace:*",
