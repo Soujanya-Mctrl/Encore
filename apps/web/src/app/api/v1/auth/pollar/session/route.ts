@@ -4,7 +4,7 @@ import { PollarSessionExchangeSchema } from "@encore/contracts";
 import { authenticateOrCreateUser } from "@encore/core";
 import { PollarVerificationError } from "@encore/infrastructure";
 import { getServerContainer } from "@/server/container";
-import { attachSessionCookie } from "@/server/request-context";
+import { attachSessionCookie, SESSION_TTL_SECONDS } from "@/server/request-context";
 import { rejectCrossOriginRequest } from "@/server/request-security";
 
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { users, sessions, externalIdentity } = getServerContainer();
+  const { users, sessions, externalIdentity, activeSessions, clock } = getServerContainer();
   if (!externalIdentity) return NextResponse.json({ error: "Pollar is not configured" }, { status: 503 });
   let identity;
   try {
@@ -37,13 +37,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: userResult.error.message }, { status: 409 });
   }
 
+  const sessionId = crypto.randomUUID();
   const token = await sessions.issueSessionToken({
     userId: userResult.value.id,
     roles: userResult.value.roles,
-    sessionId: crypto.randomUUID()
+    sessionId
   });
 
   const wallets = await users.listWalletsForUser(userResult.value.id);
+  await activeSessions.create(sessionId, userResult.value.id, new Date(clock.now().getTime() + SESSION_TTL_SECONDS * 1000));
   const res = NextResponse.json({ user: userResult.value, wallets }, { headers: { "Cache-Control": "no-store" } });
   attachSessionCookie(res, token);
   return res;

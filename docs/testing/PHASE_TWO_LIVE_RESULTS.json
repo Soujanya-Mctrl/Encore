@@ -1,0 +1,84 @@
+{
+  "catalog": {
+    "checkedAt": "2026-11-27T20:43:54.412Z",
+    "status": "passed",
+    "checks": [
+      "validated MP3 upload to private storage",
+      "atomic registry + passport persistence",
+      "immutable hash-linked v2 history",
+      "draft excluded from public search",
+      "self-review denial",
+      "independent review",
+      "signed Range playback",
+      "anonymous DB denial"
+    ],
+    "scope": "Disposable synthetic audio; not the three user demo tracks; on-chain publication is a separate test"
+  },
+  "registry": {
+    "checkedAt": "2026-11-27T20:49:25.452Z",
+    "status": "passed",
+    "programId": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+    "passport": "GBQgznq2Y24dqaWN76tcRifasAZu6kFr7UQsxLUqiWH5",
+    "signature": "4KTKXapbKLf1TbFMfbD7gfhgvJCCTvrzE7Lwj54dFNd6XYfXkjNU44dPhfjGBeAW9MPNXHAvVB5vQ7q1Tm7nVxV8",
+    "checks": [
+      "direct one-object upload grant",
+      "validated finalize",
+      "idempotent finalize",
+      "draft visibility denial",
+      "independent review",
+      "wallet-signed devnet registration",
+      "finalized on-chain hash reconciliation",
+      "public search",
+      "private signed Range playback"
+    ],
+    "scope": "Disposable synthetic UNKNOWN fixture; not a user demo track"
+  },
+  "registry-security": {
+    "checkedAt": "2026-11-27T20:52:53.813Z",
+    "status": "passed",
+    "programId": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+    "firstVersionSignature": "3jBtyzBCjba5MDEXFH6HHMXjzdhEX8VmbAYsYW3wN46Eq3BMKvmpZiLaipp8jgqT3sxK4fnQ44zbbAro8Frh1AWB",
+    "secondVersionSignature": "3pUku5BF4gKmZx7t8v21dkhGRm4FrWurzBZowVDY7K6TUTUiSwUdxDjZCmw8GffLCvT6WmBg31BD9RACaJoBxJJF",
+    "checks": [
+      "real devnet register v1 and append v2",
+      "monotonic version rejection",
+      "previous hash mismatch rejection",
+      "duplicate version rejection",
+      "unauthorized signer rejection",
+      "paused track rejection",
+      "old Passport bytes unchanged"
+    ]
+  },
+  "registrySecurityAfterUpgrade": {
+    "checkedAt": "2026-11-27T21:28:38.023Z",
+    "status": "passed",
+    "programId": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+    "firstVersionSignature": "2V8eQH5nJjZ9qGiw4LwZwNbN8nYBqxvf4QrVmAAjbXPpLKKnfPE2GpDK55yJAqDEhwgZiRB2E2vj6tt1ePiZduGH",
+    "secondVersionSignature": "4MZKvyWrjnedut3wu8QjngjsoVFe6wd5BTC9Ro8f9hTtrpMciKGgHy7eX2QzvZmzgV6jR5XsfHJLcoZ3fMUDEouV",
+    "checks": [
+      "real devnet register v1 and append v2",
+      "monotonic version rejection",
+      "previous hash mismatch rejection",
+      "duplicate version rejection",
+      "unauthorized signer rejection",
+      "paused track rejection",
+      "old Passport bytes unchanged"
+    ]
+  },
+  "browserProduction": {
+    "status": "passed",
+    "dateIst": "2026-11-28",
+    "durationSeconds": 24.9,
+    "deploymentSlot": 527002532,
+    "checks": [
+      "direct private MP3 upload",
+      "hash-linked corrected Passport",
+      "independent review",
+      "linked external wallet signature",
+      "finalized devnet reconciliation",
+      "public keyword, origin and genre filters",
+      "browser MP3 metadata loaded through an expiring preview link"
+    ],
+    "fixture": "Temporary synthetic audio with a test origin claim"
+  }
+}

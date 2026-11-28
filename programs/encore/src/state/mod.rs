@@ -33,23 +33,20 @@ pub enum OpinionOutcome {
 #[account]
 #[derive(InitSpace)]
 pub struct Artist {
-    pub artist_authority: Pubkey,
-    pub payout_wallet: Pubkey,
+    pub authority: Pubkey,
     pub profile_hash: [u8; 32],
     pub bump: u8,
 }
-
 #[account]
 #[derive(InitSpace)]
 pub struct Track {
     pub artist: Pubkey,
     pub track_id_hash: [u8; 32],
     pub current_version: u32,
-    pub current_manifest_hash: [u8; 32],
+    pub current_hash: [u8; 32],
     pub paused: bool,
     pub bump: u8,
 }
-
 #[account]
 #[derive(InitSpace)]
 pub struct PassportVersion {
@@ -57,10 +54,6 @@ pub struct PassportVersion {
     pub version: u32,
     pub previous_hash: [u8; 32],
     pub manifest_hash: [u8; 32],
-    pub origin_enum: u8,
-    pub evidence_enum: u8,
-    pub rights_flags: u8,
-    pub reviewer: Pubkey,
     pub recorded_at: i64,
 }
 

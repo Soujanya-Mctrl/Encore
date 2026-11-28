@@ -1,0 +1,595 @@
+{
+  "address": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+  "metadata": {
+    "name": "encore",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Encore music provenance, direct support, and supporter pass Anchor program"
+  },
+  "instructions": [
+    {
+      "name": "register_artist",
+      "discriminator": [
+        216,
+        118,
+        142,
+        140,
+        208,
+        146,
+        173,
+        240
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  116,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "profile_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "register_track",
+      "discriminator": [
+        133,
+        106,
+        130,
+        117,
+        155,
+        70,
+        83,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "artist"
+          ]
+        },
+        {
+          "name": "artist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  116,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "track",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  99,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "artist"
+              },
+              {
+                "kind": "arg",
+                "path": "track_id_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "passport",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  115,
+                  115,
+                  112,
+                  111,
+                  114,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "track"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "track_id_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "manifest_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "append_version",
+      "discriminator": [
+        7,
+        3,
+        240,
+        156,
+        51,
+        90,
+        85,
+        219
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "artist"
+          ]
+        },
+        {
+          "name": "artist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  116,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          },
+          "relations": [
+            "track"
+          ]
+        },
+        {
+          "name": "track",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  99,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "artist"
+              },
+              {
+                "kind": "account",
+                "path": "track.track_id_hash",
+                "account": "Track"
+              }
+            ]
+          }
+        },
+        {
+          "name": "passport",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  115,
+                  115,
+                  112,
+                  111,
+                  114,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "track"
+              },
+              {
+                "kind": "arg",
+                "path": "version"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "version",
+          "type": "u32"
+        },
+        {
+          "name": "previous_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "manifest_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "artist"
+          ]
+        },
+        {
+          "name": "artist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  116,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          },
+          "relations": [
+            "track"
+          ]
+        },
+        {
+          "name": "track",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  99,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "artist"
+              },
+              {
+                "kind": "account",
+                "path": "track.track_id_hash",
+                "account": "Track"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "encore::state::Artist",
+      "discriminator": [
+        142,
+        136,
+        31,
+        244,
+        208,
+        44,
+        128,
+        145
+      ]
+    },
+    {
+      "name": "encore::state::PassportVersion",
+      "discriminator": [
+        108,
+        13,
+        116,
+        211,
+        104,
+        255,
+        200,
+        0
+      ]
+    },
+    {
+      "name": "encore::state::Track",
+      "discriminator": [
+        148,
+        45,
+        9,
+        235,
+        14,
+        15,
+        36,
+        159
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "encore::state::Artist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "profile_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::PassportVersion",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "track",
+            "type": "pubkey"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "previous_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "manifest_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "recorded_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::Track",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "artist",
+            "type": "pubkey"
+          },
+          {
+            "name": "track_id_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "current_version",
+            "type": "u32"
+          },
+          {
+            "name": "current_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow or underflow"
+    },
+    {
+      "code": 6001,
+      "name": "TrackPaused",
+      "msg": "Track is currently paused due to a dispute or moderation action"
+    },
+    {
+      "code": 6002,
+      "name": "StalePassportVersion",
+      "msg": "Stale passport version or manifest hash mismatch"
+    },
+    {
+      "code": 6003,
+      "name": "SupplyCapReached",
+      "msg": "Supporter pass supply cap reached"
+    },
+    {
+      "code": 6004,
+      "name": "TerminalPassState",
+      "msg": "Supporter pass is in a terminal state"
+    },
+    {
+      "code": 6005,
+      "name": "Unauthorized",
+      "msg": "Unauthorized signer"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount or zero price"
+    }
+  ]
+}

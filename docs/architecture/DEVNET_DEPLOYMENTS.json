@@ -1,0 +1,22 @@
+[
+  {
+    "cluster": "devnet",
+    "programId": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+    "programData": "4aNw32jdXx6CQvtLTezExSa3qun6dULBnY7AX2V8CCiF",
+    "slot": 526992350,
+    "signature": "3geHa31dfwd2S2yzWx43Rk1q4vEDVq8Pkde65VhbZa6RBB9DHwG2359d4NtjRUjH6wNw7kbEyBoU1QgVu6k2zpBP",
+    "blockTime": "2026-11-27T20:46:57.000Z",
+    "upgradeAuthority": "2VXLffNhejZKNgeN9dNjG4s7pe8T6bGihQBmVGbTn2vM",
+    "binarySha256": "e1e7d016998509ba5ec05a5ec63f34a14c4f584e3079463f53fe8450456fd03b"
+  },
+  {
+    "cluster": "devnet",
+    "programId": "5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8",
+    "programData": "4aNw32jdXx6CQvtLTezExSa3qun6dULBnY7AX2V8CCiF",
+    "slot": 527002532,
+    "signature": "AfaDHt2zwTDsML7iZVpGmCDk52TuVaLvJ1ABRwMWtLQ9fuYj74Ay1sonQd1ypmbv2DY4EMCXmkXBKhhPi3WbBcJ",
+    "blockTime": "2026-11-27T21:27:56.000Z",
+    "upgradeAuthority": "2VXLffNhejZKNgeN9dNjG4s7pe8T6bGihQBmVGbTn2vM",
+    "binarySha256": "8ccded8ea4cfde6c21f446c7a1ef88b362ee4c488e3d9ee6c3da97dbcc0c9ca1"
+  }
+]
