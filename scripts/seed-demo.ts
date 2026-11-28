@@ -8,11 +8,12 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { Keypair, Transaction } from "@solana/web3.js";
-import { ReleaseInputSchema } from "../packages/contracts/src/index.ts";
-import { CatalogService } from "../packages/core/src/index.ts";
+import { ReleaseInputSchema, RightsDeclarationSchema } from "../packages/contracts/src/index.ts";
+import { CatalogService, effectiveRights } from "../packages/core/src/index.ts";
 import {
   SupabaseCatalogRepository,
   SupabaseMediaStorage,
+  SupabaseRightsRepository,
   SolanaRegistry,
   sha256,
   mp3Inspector,
@@ -29,9 +30,9 @@ const fixtures = categories.map(([folder, originCategory, mode]) => {
     files = readdirSync(dir).filter(
       (f) => !f.startsWith("._") && /\.mp3$/i.test(f),
     );
-  if (files.length !== 1 || !existsSync(path.join(dir, "metadata.json")))
+  if (files.length !== 1 || !existsSync(path.join(dir, "metadata.json")) || !existsSync(path.join(dir, "rights.json")))
     throw new Error(
-      `Place one MP3 and metadata.json in ${dir}; see metadata.example.json`,
+      `Place one MP3, metadata.json, and private rights.json in ${dir}; see the Phase 5–6 handoff`,
     );
   const raw = JSON.parse(readFileSync(path.join(dir, "metadata.json"), "utf8")),
     bytes = readFileSync(path.join(dir, files[0]!));
@@ -47,7 +48,9 @@ const fixtures = categories.map(([folder, originCategory, mode]) => {
       { role: "Creator", mode, creatorRef: raw.artistName, consent: true },
     ],
   });
-  return { folder, bytes, input };
+  const declaration = RightsDeclarationSchema.parse(JSON.parse(readFileSync(path.join(dir, "rights.json"), "utf8")));
+  if (Date.parse(declaration.validUntil) <= Date.now()) throw new Error(`Rights documentation expired in ${dir}`);
+  return { folder, bytes, input, declaration };
 });
 const statePath = ".local/phase-two/demo-state.json";
 mkdirSync(".local/phase-two", { recursive: true });
@@ -118,11 +121,13 @@ await rest("wallets", "POST", {
   verified_at: new Date().toISOString(),
 });
 const repo = new SupabaseCatalogRepository(url, key),
+  rights = new SupabaseRightsRepository(url, key),
   storage = new SupabaseMediaStorage(url, key),
   service = new CatalogService(repo, storage, sha256, mp3Inspector, randomUUID),
   registry = new SolanaRegistry(
     process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com",
   );
+let reviewPending = false;
 for (const f of fixtures) {
   const entry = state.tracks[f.folder] ?? { id: randomUUID() };
   state.tracks[f.folder] = entry;
@@ -133,6 +138,18 @@ for (const f of fixtures) {
     throw new Error(
       "An existing immutable demo differs from the supplied audio; create a new release instead",
     );
+  const declaration = {
+    ...f.declaration, evidenceDigest: sha256.bytes(Buffer.from(f.declaration.evidenceDocument)),
+  };
+  const record = (await rights.records([r])).get(r.id);
+  if (!record || record.status !== "approved" || sha256.hash(declaration) !== sha256.hash(record.declaration)) {
+    if (record?.status !== "approved") {
+      await rights.apply(state.owner, { action: "submit", trackId: r.id, version: r.manifest.version, declaration });
+    }
+    reviewPending = true;
+    console.log(`Rights review required for ${f.folder}: ${r.id}`);
+    continue;
+  }
   if (r.status === "published") continue;
   if (r.status === "draft") {
     await service.submit(r.id, state.owner);
@@ -175,13 +192,19 @@ for (const f of fixtures) {
   await repo.publish(r.id, r.manifestHash, signature, state.owner);
   console.log(`Published ${f.folder}: ${r.id}`);
 }
+if (reviewPending) {
+  console.log("Complete an independent rights review in the workspace, then rerun the seed command.");
+  process.exit(0);
+}
 for(const [folder,origin] of categories){
   const record=state.tracks[folder]!;
   const track=await repo.get(record.id);
   if(!track)throw new Error(`Missing published ${folder} track`);
   const results=await repo.search({q:track.title,origin,page:1});
   if(!results.tracks.some(t=>t.id===record.id))throw new Error(`${folder} demo did not appear in the catalog`);
+  const clearance = effectiveRights((await rights.records([track])).get(track.id), new Date());
+  console.log(`${folder}: ${clearance.preview ? "hosted preview" : clearance.externalUrl ? "provider listing" : "metadata only"}`);
 }
 console.log(
-  "All three declared-origin demo tracks are searchable. Evidence remains SELF_DECLARED; this is not a commercial-rights certification.",
+  "All three demo tracks are searchable with their current Passport and reviewed rights.",
 );

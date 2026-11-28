@@ -9,8 +9,8 @@ This roadmap follows the 0–14 phase sequence agreed for the current build. The
 | 2. Database & Infrastructure | Database and worker verified locally | Schema, access controls, private storage policy, real PGMQ delivery, retries, and dead-letter handling verified. Hosted migration and worker activation remain pending. |
 | 3. Artist Studio | Backend implemented | Expo-facing owner APIs cover channel activation, private uploads, credits and metadata, revision submission, and catalog delisting. Expo screens and hosted rollout are pending. |
 | 4. Provenance Engine | Scoped proof implemented | Demo and signed-instrumental proof paths create immutable Passport revisions. Production issuer integration and full-track coverage remain pending. |
-| 5. Licensing & Rights Management | Pending | Permission checks, provider restrictions, and rights documentation. |
-| 6. Music Discovery & Player | Partial | Catalog search and signed playback exist. Complete demo tracks, filters, and player state. |
+| 5. Licensing & Rights Management | Implemented locally | Versioned rights intake, scoped review, provider restrictions, private inquiries and withdrawal on web and Expo. Hosted migration and actual rights files remain pending. |
+| 6. Music Discovery & Player | Implemented locally | Live catalog, origin/evidence/genre filters and persistent preview players on web and Expo. Authorized demo audio and device verification remain pending. |
 | 7. Artist Monetization | Partial | Campaign, milestone, and distribution APIs and database projections are integrated. Verify Passport-bound settlement and reconciliation on devnet. |
 | 8. Supporter Marketplace | Partial | Marketplace screens and lifecycle APIs are integrated. Verify transfers, resale splits, and redemption on devnet. |
 | 9. ElevenLabs Integration | Pending | API feasibility was verified. Complete catalog-aware voice tools and supervised payment intents. |
@@ -21,6 +21,8 @@ This roadmap follows the 0–14 phase sequence agreed for the current build. The
 | 14. Documentation & Submission | Partial | Project and architecture docs exist. Complete the final demo, pitch, and submission. |
 
 See the [Expo authentication and database handoff](docs/setup/EXPO_AUTH_AND_DATABASE.md) for the client API and acceptance checks, and the [devnet deployment log](docs/architecture/DEVNET_DEPLOYMENTS.md) for recorded program addresses.
+
+[Phase 5–6 architecture and rollout](docs/architecture/RIGHTS_AND_PLAYER_IMPLEMENTATION.md) documents the rights and player integration.
 
 ## Planned feature details
 

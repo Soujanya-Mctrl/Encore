@@ -18,3 +18,4 @@ export * from "./catalog/supabase-catalog.js";
 
 export * from "./catalog/registry.js";
 export * from "./provenance/schnorr.js";
+export * from "./rights/repository.js";

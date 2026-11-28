@@ -1,3 +1,4 @@
+import { discoveryTracks } from "@/server/discovery";
 import { catalog } from "@/server/catalog";
 import { catalogResponse } from "@/server/catalog-http";
 import { getAuthenticatedUser } from "@/server/request-context";
@@ -18,8 +19,8 @@ export async function GET(
         !u?.roles.some((r) => ["admin", "reviewer"].includes(r)))
     )
       throw new CatalogError("Track not found", 404);
-    const {audioPath,...publicTrack}=r;
-    return { track: r.artistId===u?.id ? {...publicTrack,audioPath} : publicTrack, history: await repo.history(id) };
+    const [track] = await discoveryTracks([r]);
+    return { track, history: await repo.history(id) };
   });
 }
 

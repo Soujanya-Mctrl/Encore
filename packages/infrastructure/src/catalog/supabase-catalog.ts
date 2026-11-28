@@ -53,6 +53,7 @@ export class SupabaseCatalogRepository implements CatalogRepositoryPort {
       .select("payload", { count: "exact" })
       .eq("status", "published")
       .eq("paused", false);
+    if (q.evidence) query = query.eq("payload->manifest->>evidenceStatus", q.evidence);
     if (q.origin) query = query.eq("origin", q.origin);
     if (q.genre) query = query.eq("genre", q.genre);
     if (q.q)
@@ -166,10 +167,10 @@ export class SupabaseMediaStorage implements MediaStoragePort {
       .remove([path]);
     if (error) throw new CatalogError("Audio cleanup failed", 503);
   }
-  async preview(path: string) {
+  async preview(path: string, ttl = 60) {
     const { data, error } = await this.db.storage
       .from("encore-previews")
-      .createSignedUrl(path, 60);
+      .createSignedUrl(path, ttl);
     if (error || !data)
       throw new CatalogError("Playback temporarily unavailable", 503);
     return data.signedUrl;

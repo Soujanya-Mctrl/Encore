@@ -40,14 +40,16 @@
         }
       ],
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false, "enableBackgroundPlayback": false }],
+      "expo-secure-store"
     ],
     "scheme": "encore",
     "slug": "encore-mobile",
     "userInterfaceStyle": "automatic",
     "web": {
       "favicon": "./assets/images/favicon.png",
-      "output": "static"
+      "output": "single"
     }
   }
 }
