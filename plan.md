@@ -7,7 +7,7 @@ The PDF's Section 12 is the authoritative phase sequence. The earlier 0–15 tas
 | 1. Feasibility and setup | H00–02 | Engineering checks verified; ElevenLabs deferred by user, full gate limitations recorded |
 | 2. Registry, catalog and first deployment | H02–10 | Partially started: identity/onboarding code; passports/catalog/upload/staging unfinished |
 | 3. Economic lifecycle | H10–20 | Pending |
-| 4. Voice, rights and opportunities | H20–30 | Pending; integration scaffolding only |
+| 4. Voice, rights and opportunities | H20–30 | Pending; integration scaffolding only (includes `FR05a` Voice Discovery + `FR05b` ElevenLabs Studio Music Generation) |
 | 5. Integration and code freeze | H30–38 | Pending |
 | 6. Documentation and submission | H38–43 | Pending |
 | 7. Buffer | H43–48 | Pending |
@@ -19,6 +19,12 @@ Hours are planned elapsed build windows, not an automatically updated countdown 
 Continue with PDF Phase 2 registry/catalog work after reviewing [Phase 1 evidence and limitations](docs/planning/PHASE_ONE_REPORT.md). Live Pollar external-wallet authentication, Supabase persistence/RLS, Firecrawl feasibility and funded devnet mint/transfers are verified. ElevenLabs credentials and a live read-only voice tool check remain explicitly deferred by the user. Pollar social/hosted-wallet signing and exact event eligibility rules are not established.
 
 Do not renumber later phases or mark the original Phase 1 gate fully closed while these items remain outstanding. The user already confirmed three demo-track permissions; next collect their audio/metadata fixtures for the catalog.
+
+### ElevenLabs Music Generation (`FR05b` — Phase 4 Studio Integration)
+
+- **Scope:** Creators can generate original audio drafts directly inside **Artist Studio** via ElevenLabs Music API (`ELEVENLABS_API_KEY` server-side only), store the output + generation receipt in private Supabase Storage, and prefill a `PassportVersion` draft.
+- **Provenance & Rights Invariants:** Platform-attested ElevenLabs generations set `OriginCategory` to `AI_GENERATED` (or `AI_ASSISTED` if mixed with human stems), `EvidenceStatus` to `CORROBORATED` (backed by the ElevenLabs generation receipt), and `RightsStatus` gated by the ElevenLabs plan/Music Terms (`PREVIEW_ALLOWED` / `COMMERCIAL_CLEARED` or `RESTRICTED` — never reselling ElevenLabs Music Marketplace licenses).
+- **Architecture:** `MusicGenerationPort` in `packages/core` → `ElevenLabsMusicAdapter` in `packages/infrastructure` → `POST /api/v1/studio/generate-music` in `apps/web` → Artist Studio generation UI in `apps/mobile`.
 
 ## Artist monetization delivery plan
 

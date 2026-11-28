@@ -35,7 +35,7 @@
 | `FR02` | Music Passport (canonical hash + versioning) | `Not Started` | — |
 | `FR03` | Review & appeal workflow | `Not Started` | — |
 | `FR04` | Discover, filters & consented playback | `Not Started` | — |
-| `FR05` | ElevenLabs voice discovery & intent prep | `Not Started` | — |
+| `FR05` | ElevenLabs voice discovery, intent prep & Studio music generation | `Not Started` | Deferred to Phase 4 (`H20–30`); includes `FR05a` read-only voice discovery + `FR05b` Artist Studio ElevenLabs music generation with `CORROBORATED` generation receipt |
 | `FR06` | Direct test-USDC support + receipt | `Not Started` | — |
 | `FR07` | Supporter Pass series, resale & redemption | `Not Started` | — |
 | `FR08` | Artist dashboard & chain reconciliation | `Not Started` | — |
