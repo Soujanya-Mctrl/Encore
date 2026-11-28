@@ -85,7 +85,7 @@ export class CatalogService {
     readonly digest: DigestPort,
     readonly audio: AudioInspectorPort,
     readonly id: () => string,
-  ) {}
+  ) { }
   async upload(
     artistId: string,
     input: ReleaseInput,
@@ -101,13 +101,14 @@ export class CatalogService {
     if (generationEvidence && generationEvidence.audioHash !== audioHash) {
       throw new CatalogError("Generated audio does not match its evidence", 409);
     }
-    // Server-observed generation evidence is bound to the audio. Other origin claims remain unverified.
+    // Category is an artist claim. Evidence and rights remain separate and are never auto-promoted.
     const manifest: MusicPassportManifest = {
       trackId: id,
       version: 1,
       previousHash: null,
       originCategory: generationEvidence ? "AI_GENERATED" : input.originCategory,
-      evidenceStatus: generationEvidence ? "CORROBORATED" : "UNVERIFIED",
+      evidenceStatus: generationEvidence ? "CORROBORATED" :
+        input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
       ...(generationEvidence && { generationEvidenceHash: this.digest.hash(generationEvidence) }),
       rightsStatus: "PREVIEW_ALLOWED",
       contributions: input.contributions,
@@ -138,7 +139,7 @@ export class CatalogService {
       // object before removing the upload. A concurrent finalize can win too.
       const existing = await this.repo.get(id).catch(() => undefined);
       if (existing !== undefined && existing?.audioPath !== path) {
-        await this.storage.remove(path).catch(() => {});
+        await this.storage.remove(path).catch(() => { });
       }
       if (existing?.artistId === artistId && existing.audioHash === audioHash && existing.manifestHash === release.manifestHash) return existing;
       throw error;
@@ -172,8 +173,7 @@ export class CatalogService {
       originCategory: r.manifest.generationEvidenceHash ? r.manifest.originCategory : input.originCategory,
       contributions: input.contributions,
       evidenceStatus: r.manifest.generationEvidenceHash ? r.manifest.evidenceStatus :
-        "UNVERIFIED",
-      ...(r.manifest.generationEvidenceHash ? { generationEvidenceHash: r.manifest.generationEvidenceHash } : {}),
+        input.originCategory === "UNKNOWN" ? "UNVERIFIED" : "SELF_DECLARED",
       rightsStatus: r.manifest.rightsStatus,
       ...(r.manifest.metadataSignal ? { metadataSignal: r.manifest.metadataSignal } : {}),
     };
@@ -218,7 +218,7 @@ export class CatalogService {
       proofDigest,
     };
     if (release.manifest.originCategory === "HUMAN_CREATED" &&
-        (release.manifest.metadataSignal || input.demoScenario === "ai_signal")) {
+      (release.manifest.metadataSignal || input.demoScenario === "ai_signal")) {
       result.reason = "ai_metadata_signal";
     } else if (verifier.mode === "simulated" && input.demoScenario === "supported") {
       result.outcome = "simulated_supported";
@@ -239,7 +239,7 @@ export class CatalogService {
       ...release.manifest,
       version: input.expectedVersion + 1,
       previousHash: release.manifestHash,
-      evidenceStatus: release.manifest.generationEvidenceHash ? release.manifest.evidenceStatus : "UNVERIFIED",
+      evidenceStatus: "UNVERIFIED",
       provenance: result,
     };
     const manifestHash = this.digest.hash({ ...manifest, audioHash: release.audioHash });
