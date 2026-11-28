@@ -13,4 +13,6 @@ The HTML documents are self-contained. Download an HTML file and open it in a br
 
 The marketplace blueprints are design alternatives. The diagrams describe proposed flows and do not change the repository's current implementation or establish a live offering. The sample chart uses synthetic data.
 
+The Phase 2 implementation diagram follows the upload, review, devnet commitment and listener paths that were exercised in the live checks. [Offline HTML](encore-phase-two.html) · [Light PNG](encore-phase-two.png) · [Dark PNG](encore-phase-two-dark.png) · [Template](encore-phase-two.template.html). Built with [stack-diagram](https://github.com/caru-ini/stack-diagram/tree/1b375941783ff0b1503b91afa079cdf59a966523/skills/stack-diagram).
+
 Expo Web export and the Android sign-in handoff are integration gates. Use the existing Next.js service as the shared API. The marketplace blueprints inherit this client boundary.

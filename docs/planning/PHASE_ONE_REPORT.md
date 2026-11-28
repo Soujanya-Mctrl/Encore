@@ -1,6 +1,6 @@
 # PDF Phase 1: Feasibility and Setup
 
-Status: **Verified engineering checks; original exit gate remains open for deferred voice and the limitations below.** The user explicitly deferred ElevenLabs on 27 November 2026. Phase 2 registry work can follow this checkpoint; do not describe the original PDF checklist as fully complete.
+Status: **Approximately 85% complete.** On 28 November 2026 (Asia/Kolkata), the new ElevenLabs key passed account, agent-list, agent-detail and signed-session-URL authorization checks (HTTP 200). The unique existing Encore agent was linked in the ignored local env. A live voice conversation/read-only tool run and the other gate limitations below remain unverified. Phase 2 is now active. See the [Phase 2 handoff](PHASE_TWO_REPORT.md).
 
 ## Checklist and evidence
 
@@ -13,7 +13,7 @@ Status: **Verified engineering checks; original exit gate remains open for defer
 | Custom transaction signer fallback | Available | External wallet adapter custom-transaction unit test and real devnet transaction signing; hosted custom Anchor signing remains unverified, so retain external fallback |
 | Supabase initialization | Passed | Identity migrations 001 and 002 applied; six tables with RLS; persistence across independent clients; anonymous reads hide records and inserts return 401 |
 | Devnet funds, test mint and signed sample transfer | Passed | User funded 0.5 test SOL; created six-decimal test mint and confirmed SOL/token transfers; public evidence below |
-| ElevenLabs live session and read-only tool | Deferred by user | API key and agent absent. Real voice conversation/tool check remains required before the original gate can close |
+| ElevenLabs live session and read-only tool | Credentials and session authorization verified; live execution pending | API key and existing Encore agent verified; agent ID linked locally. No live conversation, audio exchange or read-only tool execution was run during this credential check |
 | Firecrawl crawl test | Passed | Real v2 scrape of the user's public Encore repository; API feasibility only. Commissioning brief extraction/matching belongs to later work |
 | Three demo-track permissions | Confirmed by user | No further permission question required. Track audio, metadata and evidence fixtures remain Phase 2 catalog inputs |
 | Event rules and sponsor criteria | Partially checked | Official site confirms November 27–29, 2026. Exact cutoff, prebuild rules and sponsor criteria were not independently established; no eligibility claim |
@@ -26,7 +26,7 @@ Status: **Verified engineering checks; original exit gate remains open for defer
 - [Confirmed transfer of 1,000,000 smallest units](https://explorer.solana.com/tx/2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW?cluster=devnet).
 - Sanitized service and transaction results: [live evidence](../testing/PHASE_ONE_LIVE_RESULTS.json).
 
-No Encore program has been deployed. Its placeholder ID is not a deployment address. Devnet sample transfers do not prove future support, purchase, resale or redemption instructions.
+Phase 1 sample transfers exercised the test token. Phase 2 later deployed the registry and recorded the address and binary history in the [devnet deployment log](../architecture/DEVNET_DEPLOYMENTS.md).
 
 ## Authentication trust boundary
 
@@ -40,4 +40,4 @@ See [test results](../testing/PHASE_ONE_TEST_REPORT.md) and [local toolchain not
 
 ## Handoff
 
-The next PDF phase is **Phase 2, H02–10: registry, catalog and first deployment**. Implement Artist/Track/PassportVersion accounts and authorization/hash/version tests, then artist submission, three authorized categorized tracks, manifest/discovery UI and staging deployment. Queue TODO tests and the full economic/security acceptance suite remain later-phase work. Finish the deferred voice spike before claiming the original Phase 1 exit gate is closed.
+The next PDF phase is **Phase 2, H02–10: registry, catalog and first deployment**. Implement Artist/Track/PassportVersion accounts and authorization/hash/version tests, then artist submission, three authorized categorized tracks, manifest/discovery UI and staging deployment. Queue TODO tests and the full economic/security acceptance suite remain later-phase work. Finish the live voice/read-only tool spike before claiming the original Phase 1 exit gate is closed.

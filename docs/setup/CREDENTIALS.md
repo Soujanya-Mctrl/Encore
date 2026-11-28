@@ -118,7 +118,7 @@ The verified spike sets `NEXT_PUBLIC_TEST_USDC_MINT` to the generated demo mint;
 
 - [x] Pollar test publishable key saved; localhost allowed; external Solana login verified (hosted provisioning remains untested).
 - [x] Supabase project URL and backend secret saved; identity migrations and RLS verified.
-- [ ] ElevenLabs API key and agent ID: explicitly deferred by the user.
+- [x] ElevenLabs API key verified and existing Encore agent ID linked locally on 28 November 2026; live voice/read-only tool run remains pending.
 - [x] Firecrawl API key saved; authorized project-page scrape verified.
 - [x] Generated `ENCORE_SESSION_SECRET` retained.
 - [x] Permission for three demo tracks confirmed by the user.

@@ -12,9 +12,12 @@ test.describe("Encore Auth & Onboarding", () => {
     await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
   });
 
-  test("does not issue a cookie for the disabled Pollar exchange", async ({ request }) => {
-    const response = await request.post("/api/v1/auth/pollar/session", { data: {} });
-    expect(response.status()).toBe(503);
+  test("does not issue a cookie for a Pollar exchange without proofs", async ({ request, baseURL }) => {
+    const response = await request.post("/api/v1/auth/pollar/session", {
+      headers: { origin: process.env.NEXT_PUBLIC_APP_URL || baseURL! },
+      data: {}
+    });
+    expect(response.status()).toBe(400);
     expect(response.headers()["set-cookie"]).toBeUndefined();
   });
 

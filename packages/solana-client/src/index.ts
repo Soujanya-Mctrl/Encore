@@ -11,6 +11,8 @@ import {
 
 export * from "./pda/seeds.js";
 
+export * from "./registry.js";
+
 function anchorDiscriminator(ixName: string): Buffer {
   return crypto.createHash("sha256").update(`global:${ixName}`).digest().subarray(0, 8);
 }

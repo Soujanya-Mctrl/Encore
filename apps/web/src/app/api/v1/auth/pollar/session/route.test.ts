@@ -9,12 +9,16 @@ const request = (body: unknown, origin = "http://localhost:3000") => new Request
   method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(body)
 });
 let verify = vi.fn();
+const registerSession = vi.fn();
 beforeEach(() => {
+  registerSession.mockReset();
   vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
   verify = vi.fn().mockResolvedValue({ provider: "google", providerSubject: "trusted-user", displayName: "Trusted Artist" });
   vi.mocked(getServerContainer).mockReturnValue({
     users: new InMemoryIdentityRepository(),
     sessions: new HmacSessionTokenService("test-secret-at-least-thirty-two-bytes-long"),
+    activeSessions: { create: registerSession },
+    clock: { now: () => new Date("2026-11-28T00:00:00Z") },
     externalIdentity: { verify }
   } as unknown as ReturnType<typeof getServerContainer>);
 });
@@ -44,5 +48,6 @@ describe("Pollar session endpoint", () => {
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(verify).toHaveBeenCalledWith(proof);
+    expect(registerSession).toHaveBeenCalledWith(expect.any(String), expect.any(String), new Date("2026-11-28T02:00:00Z"));
   });
 });

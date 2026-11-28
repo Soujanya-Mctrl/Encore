@@ -2,9 +2,9 @@
 -- The Data API accepts these operations from service_role only.
 
 alter table public.auth_challenges
-  add column message_digest text check (message_digest ~ '^[0-9a-f]{64}$');
+  add column if not exists message_digest text check (message_digest ~ '^[0-9a-f]{64}$');
 
-create table public.artist_channels (
+create table if not exists public.artist_channels (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null unique references public.profiles(id) on delete cascade,
   handle text not null unique check (handle ~ '^[a-z0-9][a-z0-9-]{1,63}$'),
@@ -12,25 +12,25 @@ create table public.artist_channels (
   created_at timestamptz not null default now()
 );
 
-create table public.artist_channel_members (
+create table if not exists public.artist_channel_members (
   channel_id uuid not null references public.artist_channels(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
   role text not null check (role in ('owner', 'editor')),
   primary key (channel_id, user_id)
 );
-create unique index artist_channel_members_one_owner_idx
+create unique index if not exists artist_channel_members_one_owner_idx
   on public.artist_channel_members (channel_id) where role = 'owner';
-create index artist_channel_members_user_idx
+create index if not exists artist_channel_members_user_idx
   on public.artist_channel_members (user_id, channel_id);
 
-create table public.review_assignments (
+create table if not exists public.review_assignments (
   id uuid primary key default gen_random_uuid(),
   channel_id uuid not null references public.artist_channels(id) on delete cascade,
   reviewer_user_id uuid not null references public.profiles(id) on delete cascade,
   created_at timestamptz not null default now(),
   unique (channel_id, reviewer_user_id)
 );
-create index review_assignments_reviewer_idx
+create index if not exists review_assignments_reviewer_idx
   on public.review_assignments (reviewer_user_id, created_at, id);
 
 alter table public.artist_channels enable row level security;
@@ -47,13 +47,15 @@ insert into public.artist_channels (owner_user_id, handle, display_name)
 select p.id, 'artist-' || p.id::text, p.display_name
 from public.profiles p
 join public.user_roles r on r.user_id = p.id and r.role = 'artist'
-where p.onboarding_status = 'completed';
+where p.onboarding_status = 'completed'
+on conflict (owner_user_id) do nothing;
 
 insert into public.artist_channel_members (channel_id, user_id, role)
 select id, owner_user_id, 'owner'
-from public.artist_channels;
+from public.artist_channels
+on conflict (channel_id, user_id) do nothing;
 
-create function public.provision_encore_identity(
+create or replace function public.provision_encore_identity(
   p_provider text, p_subject text, p_display_name text, p_avatar_url text
 ) returns setof public.auth_identities
 language plpgsql security invoker set search_path = ''
@@ -78,7 +80,7 @@ begin
 end;
 $$;
 
-create function public.complete_encore_onboarding(
+create or replace function public.complete_encore_onboarding(
   p_user_id uuid, p_display_name text, p_avatar_url text, p_journey text,
   p_preferred_genres text[], p_origin_preferences jsonb
 ) returns void
@@ -124,7 +126,7 @@ begin
 end;
 $$;
 
-create function public.bind_encore_verified_wallet(
+create or replace function public.bind_encore_verified_wallet(
   p_user_id uuid, p_address text, p_wallet_type text, p_is_primary boolean
 ) returns setof public.wallets
 language plpgsql security invoker set search_path = ''
@@ -145,7 +147,7 @@ begin
 end;
 $$;
 
-create function public.encore_studio_channel_for_user(p_user_id uuid)
+create or replace function public.encore_studio_channel_for_user(p_user_id uuid)
 returns table (id uuid, handle text, display_name text, role text)
 language sql stable security invoker set search_path = ''
 as $$
@@ -160,7 +162,7 @@ as $$
   limit 1
 $$;
 
-create function public.encore_review_assignments_for_user(p_user_id uuid)
+create or replace function public.encore_review_assignments_for_user(p_user_id uuid)
 returns table (id uuid, channel_id uuid, created_at timestamptz)
 language sql stable security invoker set search_path = ''
 as $$
