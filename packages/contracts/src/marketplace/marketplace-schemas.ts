@@ -94,6 +94,57 @@ export const DistributionClaimInputSchema = z.object({
   cycleId: z.string().min(1)
 });
 
+export const CancelPassListingInputSchema = z.object({
+  passId: z.string().min(1)
+});
+
+export const CancelSpotListingInputSchema = z.object({
+  spotListingId: z.string().min(1)
+});
+
+export const RefundCampaignInputSchema = z.object({
+  campaignId: z.string().min(1)
+});
+
+export const ReviewCampaignInputSchema = z.object({
+  campaignId: z.string().min(1),
+  decision: z.enum(["APPROVED", "CHANGES_REQUESTED", "REJECTED"]),
+  notes: z.string().max(1000).default(""),
+  termsHash: z.string().length(64).optional()
+});
+
+export const SubmitMilestoneInputSchema = z.object({
+  milestoneId: z.string().min(1),
+  evidenceUri: z.string().url().max(500)
+});
+
+export const ApproveMilestoneInputSchema = z.object({
+  milestoneId: z.string().min(1),
+  approved: z.boolean()
+});
+
+export const ReconcileDistributionInputSchema = z.object({
+  cycleId: z.string().min(1),
+  evidenceHash: z.string().length(64),
+  verifiedRevenueSmallestUnits: PositiveAtomicAmountSchema
+});
+
+export const FundDistributionInputSchema = z.object({
+  cycleId: z.string().min(1),
+  fundedTxSig: z.string().min(32).max(128)
+});
+
+export const TRANSACTION_LIFECYCLE_STATES = [
+  "review",
+  "wallet",
+  "submitted",
+  "pending",
+  "finalized",
+  "failed",
+  "expired"
+] as const;
+export type TransactionLifecycleState = (typeof TRANSACTION_LIFECYCLE_STATES)[number];
+
 export const OpinionTradeInputSchema = z.object({
   marketId: z.string().min(1),
   side: z.enum(["YES", "NO"]),
@@ -124,6 +175,14 @@ export type CampaignPledgeInput = z.infer<typeof CampaignPledgeInputSchema>;
 export type CreateSpotListingInput = z.infer<typeof CreateSpotListingInputSchema>;
 export type BuySpotListingInput = z.infer<typeof BuySpotListingInputSchema>;
 export type DistributionClaimInput = z.infer<typeof DistributionClaimInputSchema>;
+export type CancelPassListingInput = z.infer<typeof CancelPassListingInputSchema>;
+export type CancelSpotListingInput = z.infer<typeof CancelSpotListingInputSchema>;
+export type RefundCampaignInput = z.infer<typeof RefundCampaignInputSchema>;
+export type ReviewCampaignInput = z.infer<typeof ReviewCampaignInputSchema>;
+export type SubmitMilestoneInput = z.infer<typeof SubmitMilestoneInputSchema>;
+export type ApproveMilestoneInput = z.infer<typeof ApproveMilestoneInputSchema>;
+export type ReconcileDistributionInput = z.infer<typeof ReconcileDistributionInputSchema>;
+export type FundDistributionInput = z.infer<typeof FundDistributionInputSchema>;
 export type OpinionTradeInput = z.infer<typeof OpinionTradeInputSchema>;
 export type TrackPassportSummary = z.infer<typeof TrackPassportSummarySchema>;
 
@@ -170,4 +229,5 @@ export interface MarketplaceSnapshotDto {
     low: number;
     close: number;
   }>;
+  candlesLastUpdatedAt: string | null;
 }

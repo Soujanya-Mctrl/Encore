@@ -8,9 +8,14 @@ import {
 } from "../../domain/split-math.js";
 import type {
   CampaignEntity,
+  CampaignMilestoneEntity,
+  CampaignReviewEntity,
+  CandlePoint,
+  DistributionApprovalEntity,
   DistributionCycleEntity,
   OpinionMarketEntity,
   PassSeriesEntity,
+  SpotFillEntity,
   SpotListingEntity,
   SupporterPassEntity
 } from "../../domain/marketplace.entities.js";
@@ -390,4 +395,237 @@ export async function tradeOpinionMarketPair(
   }
   const updated = await repo.recordOpinionTrade(params);
   return ok(updated);
+}
+
+export async function cancelPassListing(
+  repo: MarketplaceRepositoryPort,
+  params: { passId: string; userId: string }
+): Promise<Result<SupporterPassEntity, Error>> {
+  const pass = await repo.getPassById(params.passId);
+  if (!pass) return err(new Error("Pass not found"));
+  if (pass.ownerUserId !== params.userId) {
+    return err(new Error("Only the pass owner can cancel this listing"));
+  }
+  if (pass.status !== "LISTED") {
+    return err(new Error(`Pass in status ${pass.status} cannot be cancelled`));
+  }
+  const updated = await repo.savePass({
+    ...pass,
+    status: "OWNED",
+    nonce: pass.nonce + 1,
+    listingPriceSmallestUnits: null,
+    listingExpiry: null
+  });
+  return ok(updated);
+}
+
+export async function cancelSpotListing(
+  repo: MarketplaceRepositoryPort,
+  params: { spotListingId: string; userId: string }
+): Promise<Result<SpotListingEntity, Error>> {
+  const listing = await repo.getSpotListingById(params.spotListingId);
+  if (!listing) return err(new Error("Spot listing not found"));
+  if (listing.sellerUserId !== params.userId) {
+    return err(new Error("Only the seller can cancel this spot listing"));
+  }
+  if (!listing.active) {
+    return err(new Error("Spot listing is already inactive"));
+  }
+  const updated = await repo.saveSpotListing({
+    ...listing,
+    active: false
+  });
+  return ok(updated);
+}
+
+export async function refundCampaign(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: { campaignId: string; userId: string }
+): Promise<Result<{ campaign: CampaignEntity; refundSmallestUnits: string }, Error>> {
+  const campaign = await repo.getCampaignById(params.campaignId);
+  if (!campaign) return err(new Error("Campaign not found"));
+  const deadlinePassed = clock.now().getTime() > campaign.deadline.getTime();
+  const goalMissed = BigInt(campaign.raisedSmallestUnits) < BigInt(campaign.goalSmallestUnits);
+  if (campaign.status !== "FAILED" && !(deadlinePassed && goalMissed)) {
+    return err(new Error("Campaign is not eligible for refund"));
+  }
+  const pledged = await repo.getCampaignPledgeAmount(campaign.id, params.userId);
+  if (BigInt(pledged) <= 0n) {
+    return err(new Error("No refundable pledge found for user"));
+  }
+  const claimed = await repo.markCampaignRefundClaimed(campaign.id, params.userId);
+  if (!claimed) {
+    return err(new Error("Campaign refund already claimed"));
+  }
+  return ok({ campaign, refundSmallestUnits: pledged });
+}
+
+export async function reviewCampaign(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: {
+    campaignId: string;
+    reviewerUserId: string;
+    decision: "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+    notes: string;
+    termsHash?: string;
+  }
+): Promise<Result<CampaignReviewEntity, Error>> {
+  const campaign = await repo.getCampaignById(params.campaignId);
+  if (!campaign) return err(new Error("Campaign not found"));
+  if (campaign.artistUserId === params.reviewerUserId) {
+    return err(new Error("Artist cannot review their own campaign"));
+  }
+  const review = await repo.recordCampaignReview({
+    id: crypto.randomUUID(),
+    campaignId: campaign.id,
+    reviewerUserId: params.reviewerUserId,
+    decision: params.decision,
+    notes: params.notes,
+    termsHash: params.termsHash ?? null,
+    createdAt: clock.now()
+  });
+  return ok(review);
+}
+
+export async function submitMilestoneEvidence(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: { milestoneId: string; artistUserId: string; evidenceUri: string }
+): Promise<Result<CampaignMilestoneEntity, Error>> {
+  const milestone = await repo.getMilestoneById(params.milestoneId);
+  if (!milestone) return err(new Error("Milestone not found"));
+  const campaign = await repo.getCampaignById(milestone.campaignId);
+  if (!campaign || campaign.artistUserId !== params.artistUserId) {
+    return err(new Error("Only the campaign artist can submit milestone evidence"));
+  }
+  if (milestone.status === "APPROVED" || milestone.status === "RELEASED") {
+    return err(new Error(`Milestone in status ${milestone.status} cannot be resubmitted`));
+  }
+  const updated = await repo.saveMilestone({
+    ...milestone,
+    evidenceUri: params.evidenceUri,
+    status: "SUBMITTED",
+    updatedAt: clock.now()
+  });
+  return ok(updated);
+}
+
+export async function approveMilestone(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: { milestoneId: string; reviewerUserId: string; approved: boolean }
+): Promise<Result<CampaignMilestoneEntity, Error>> {
+  const milestone = await repo.getMilestoneById(params.milestoneId);
+  if (!milestone) return err(new Error("Milestone not found"));
+  if (milestone.status !== "SUBMITTED") {
+    return err(new Error("Milestone must be SUBMITTED before review"));
+  }
+  const campaign = await repo.getCampaignById(milestone.campaignId);
+  if (campaign && campaign.artistUserId === params.reviewerUserId) {
+    return err(new Error("Artist cannot approve their own milestone"));
+  }
+  const updated = await repo.saveMilestone({
+    ...milestone,
+    status: params.approved ? "APPROVED" : "REJECTED",
+    reviewerUserId: params.reviewerUserId,
+    updatedAt: clock.now()
+  });
+  return ok(updated);
+}
+
+export async function reconcileDistributionCycle(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: {
+    cycleId: string;
+    operatorUserId: string;
+    evidenceHash: string;
+    verifiedRevenueSmallestUnits: string;
+  }
+): Promise<Result<DistributionApprovalEntity, Error>> {
+  const cycle = await repo.getDistributionCycleById(params.cycleId);
+  if (!cycle) return err(new Error("Distribution cycle not found"));
+  await repo.saveDistributionCycle({
+    ...cycle,
+    verifiedRevenueSmallestUnits: params.verifiedRevenueSmallestUnits
+  });
+  const approval = await repo.saveDistributionApproval({
+    cycleId: cycle.id,
+    operatorUserId: params.operatorUserId,
+    approverUserId: null,
+    evidenceHash: params.evidenceHash,
+    reconciledAt: clock.now(),
+    approvedAt: null,
+    fundedTxSig: null,
+    status: "RECONCILED"
+  });
+  return ok(approval);
+}
+
+export async function approveAndFundDistributionCycle(
+  repo: MarketplaceRepositoryPort,
+  clock: ClockPort,
+  params: {
+    cycleId: string;
+    approverUserId: string;
+    fundedTxSig: string;
+  }
+): Promise<Result<DistributionApprovalEntity, Error>> {
+  const approval = await repo.getDistributionApproval(params.cycleId);
+  if (!approval) return err(new Error("Distribution cycle has not been reconciled yet"));
+  if (approval.operatorUserId === params.approverUserId) {
+    return err(new Error("Dual approval required: approver must differ from operator"));
+  }
+  if (approval.status === "FUNDED_AND_OPEN") {
+    return err(new Error("Distribution cycle is already funded and open"));
+  }
+  const updated = await repo.saveDistributionApproval({
+    ...approval,
+    approverUserId: params.approverUserId,
+    approvedAt: clock.now(),
+    fundedTxSig: params.fundedTxSig,
+    status: "FUNDED_AND_OPEN"
+  });
+  return ok(updated);
+}
+
+export function aggregateSpotCandles(
+  fills: readonly SpotFillEntity[],
+  bucketMinutes = 60
+): { candles: CandlePoint[]; lastUpdatedAt: string | null } {
+  if (fills.length === 0) {
+    return { candles: [], lastUpdatedAt: null };
+  }
+  const sorted = [...fills].sort((a, b) => a.filledAt.getTime() - b.filledAt.getTime());
+  const bucketMs = Math.max(1, bucketMinutes) * 60_000;
+  const buckets = new Map<number, SpotFillEntity[]>();
+
+  for (const fill of sorted) {
+    const bucketKey = Math.floor(fill.filledAt.getTime() / bucketMs) * bucketMs;
+    const list = buckets.get(bucketKey) ?? [];
+    list.push(fill);
+    buckets.set(bucketKey, list);
+  }
+
+  const candles: CandlePoint[] = [];
+  for (const [bucketStart, bucketFills] of Array.from(buckets.entries()).sort((a, b) => a[0] - b[0])) {
+    const prices = bucketFills.map((f) => Number(f.unitPriceSmallestUnits) / 1_000_000);
+    const open = prices[0]!;
+    const close = prices[prices.length - 1]!;
+    const high = Math.max(...prices);
+    const low = Math.min(...prices);
+    const iso = new Date(bucketStart).toISOString();
+    candles.push({
+      time: `${iso.slice(11, 16)} UTC`,
+      open,
+      high,
+      low,
+      close
+    });
+  }
+
+  const lastUpdatedAt = sorted[sorted.length - 1]!.filledAt.toISOString();
+  return { candles, lastUpdatedAt };
 }

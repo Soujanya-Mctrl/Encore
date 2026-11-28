@@ -5,6 +5,13 @@ import { getServerContainer } from "@/server/container";
 import { requireAuthenticatedUser } from "@/server/request-context";
 
 export async function POST(req: Request) {
+  if (process.env.ENABLE_OPINION_MARKET !== "true") {
+    return NextResponse.json(
+      { error: "Opinion markets are deferred outside the DeFi demo scope" },
+      { status: 404 }
+    );
+  }
+
   const auth = await requireAuthenticatedUser();
   if (auth.errorResponse) return auth.errorResponse;
 

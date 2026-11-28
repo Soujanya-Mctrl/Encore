@@ -21,7 +21,8 @@ import {
   PgmqAdapter,
   PollarSessionVerifier,
   SolanaMarketplaceChainAdapter,
-  SupabaseIdentityRepository
+  SupabaseIdentityRepository,
+  SupabaseMarketplaceRepository
 } from "@encore/infrastructure";
 
 export interface ServerContainer {
@@ -63,12 +64,15 @@ export function getServerContainer(): ServerContainer {
     throw new Error("Persistent identity and session storage is required in production");
   }
   let activeSessions: ActiveSessions;
+  let marketplace: MarketplaceRepositoryPort;
   if (supabaseUrl && serviceRoleKey) {
     repo = new SupabaseIdentityRepository(supabaseUrl, serviceRoleKey);
     activeSessions = new SupabaseActiveSessions(supabaseUrl, serviceRoleKey);
+    marketplace = new SupabaseMarketplaceRepository(supabaseUrl, serviceRoleKey);
   } else {
     repo = new InMemoryIdentityRepository();
     activeSessions = new InMemoryActiveSessions();
+    marketplace = new InMemoryMarketplaceRepository();
   }
 
   const container: ServerContainer = {
@@ -78,7 +82,7 @@ export function getServerContainer(): ServerContainer {
     verifier: new NodeEd25519Verifier(),
     activeSessions,
     sessions: new HmacSessionTokenService(sessionSecret),
-    marketplace: new InMemoryMarketplaceRepository(),
+    marketplace,
     chain: new SolanaMarketplaceChainAdapter(process.env.NEXT_PUBLIC_ENCORE_PROGRAM_ID),
     queue: new PgmqAdapter(supabaseUrl, serviceRoleKey),
     clock: { now: () => new Date() },

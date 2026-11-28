@@ -9,6 +9,7 @@
 - **Current Phase:** `PDF Phase 2 / H02–10 — registry, upload, Music Passport and catalog verified; demo audio and web staging pending`
 
 - **Incoming marketplace milestone:** `Gate 2 & 3 Engineering Implementation — Marketplace Layer 1/2, Expo Mobile & PKCE Auth integrated on main (f1aef71); local TypeScript/Vitest/Next build checks passing`
+- **Current Phase:** `Artist Monetization Phases 1, 2 & 4 Complete on main — Migrations (0001–0006), SupabaseMarketplaceRepository, Cancel/Refund/Governance APIs & Expo UI verified; Phase 3 Anchor/Rust CLI staged`
 - **Architecture Style:** `TypeScript Monorepo (pnpm + Turborepo) + Modular Monolith + Single Anchor Program`
 - **PRD Version:** `1.0` (`26 November 2026`)
 - **Code Freeze Target:** `H38` | **Submission Target:** `H43`
@@ -65,6 +66,7 @@
 - **`2026-11-28` — ElevenLabs credential check:** Account, agent list, existing Encore agent and signed-session URL authorization all returned HTTP 200. Linked the unique existing Encore agent in ignored `.env.local`. No API key, signed URL or user profile data published. Live voice/read-only tool execution remains unverified.
 
 
+- **`2026-11-28` — Artist Monetization Phases 1, 2 & 4 Complete:** Renumbered colliding migrations (`202611280003`–`0005`) and added `202611280006_governance_and_indexer.sql`; implemented `SupabaseMarketplaceRepository` and wired `container.ts`; added cancel/refund/dual-approval governance/OHLCV use cases & `/api/v1/` routes; gated `opinion/trade` behind `ENABLE_OPINION_MARKET=true`; added `useTransactionLifecycle()`, real OHLCV empty state in `CandlestickChart.tsx`, `admin/reviews.tsx`, and cancel/refund/milestone UI. Verified `pnpm lint`, `pnpm check:secrets`, `pnpm typecheck` (`6/6`), `pnpm test` (`13` files / `50` tests passed, `4` queue `todo` specs skipped), and `pnpm --filter @encore/web build` (`35/35` routes).
 - **`2026-11-28` — Marketplace Layer 1/2, Expo PKCE Auth & Verification:** Integrated Supporter Marketplace Layer 1 & Layer 2 (`packages/{contracts,core,solana-client,infrastructure}`, `programs/encore`, `supabase/migrations/202611280001..0003*.sql`, `apps/web/src/app/api/v1/`, `apps/mobile`), added native Expo Android PKCE bearer exchange, consolidated all work onto `main` (`f1aef71`), and fixed `scripts/check-secrets.ts` when `.env.local` is absent. Verified `pnpm lint`, `pnpm check:secrets`, `pnpm typecheck` (`6/6`), `pnpm test` (`13` files / `49` tests passed, `4` queue `todo` specs skipped), and `pnpm --filter @encore/web build` (`28/28` routes).
 - **`2026-11-27` — Phase 1 verification:** Verified live Pollar external SIWS/DPoP, Supabase identity persistence/RLS, authorized Firecrawl scrape and funded devnet test mint/transfers. Added authentication security tests and smallest-unit fee tests. ElevenLabs explicitly deferred; full original gate remains open. See [Phase 1 report](PHASE_ONE_REPORT.md).
 

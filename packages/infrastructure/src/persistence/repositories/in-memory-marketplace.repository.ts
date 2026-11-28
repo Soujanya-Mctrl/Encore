@@ -1,15 +1,19 @@
 import type { TrackPassportSummary } from "@encore/contracts";
-import type {
-  CampaignEntity,
-  CandlePoint,
-  DistributionCycleEntity,
-  MarketplaceRepositoryPort,
-  MarketplaceSnapshot,
-  OpinionMarketEntity,
-  PassSeriesEntity,
-  SpotListingEntity,
-  SupportReceiptEntity,
-  SupporterPassEntity
+import {
+  aggregateSpotCandles,
+  type CampaignEntity,
+  type CampaignMilestoneEntity,
+  type CampaignReviewEntity,
+  type DistributionApprovalEntity,
+  type DistributionCycleEntity,
+  type MarketplaceRepositoryPort,
+  type MarketplaceSnapshot,
+  type OpinionMarketEntity,
+  type PassSeriesEntity,
+  type SpotFillEntity,
+  type SpotListingEntity,
+  type SupportReceiptEntity,
+  type SupporterPassEntity
 } from "@encore/core";
 
 const SEED_TRACKS: TrackPassportSummary[] = [
@@ -51,15 +55,6 @@ const SEED_TRACKS: TrackPassportSummary[] = [
   }
 ];
 
-const SEED_CANDLES: CandlePoint[] = [
-  { time: "12:00 UTC", open: 1.02, high: 1.08, low: 0.99, close: 1.06 },
-  { time: "13:00 UTC", open: 1.06, high: 1.12, low: 1.02, close: 1.04 },
-  { time: "14:00 UTC", open: 1.04, high: 1.15, low: 1.04, close: 1.13 },
-  { time: "15:00 UTC", open: 1.13, high: 1.17, low: 1.08, close: 1.1 },
-  { time: "16:00 UTC", open: 1.1, high: 1.22, low: 1.09, close: 1.2 },
-  { time: "17:00 UTC", open: 1.2, high: 1.26, low: 1.16, close: 1.24 }
-];
-
 export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort {
   private readonly tracks = new Map<string, TrackPassportSummary>();
   private readonly series = new Map<string, PassSeriesEntity>();
@@ -69,9 +64,13 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   private readonly pledges = new Map<string, string>();
   private readonly refundedPledges = new Set<string>();
   private readonly spotListings = new Map<string, SpotListingEntity>();
+  private readonly spotFills: SpotFillEntity[] = [];
   private readonly shareBalances = new Map<string, number>();
   private readonly cycles = new Map<string, DistributionCycleEntity>();
+  private readonly distributionApprovals = new Map<string, DistributionApprovalEntity>();
   private readonly claimedCycles = new Set<string>();
+  private readonly campaignReviews: CampaignReviewEntity[] = [];
+  private readonly milestones = new Map<string, CampaignMilestoneEntity>();
   private readonly markets = new Map<string, OpinionMarketEntity>();
 
   constructor() {
@@ -156,6 +155,10 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   }
 
   async getMarketplaceSnapshot(): Promise<MarketplaceSnapshot> {
+    const { candles, lastUpdatedAt } =
+      this.spotFills.length > 0
+        ? aggregateSpotCandles(this.spotFills)
+        : { candles: [], lastUpdatedAt: null };
     return {
       tracks: Array.from(this.tracks.values()),
       series: Array.from(this.series.values()),
@@ -164,7 +167,8 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
       spotListings: Array.from(this.spotListings.values()).filter((s) => s.active),
       distributionCycles: Array.from(this.cycles.values()),
       opinionMarkets: Array.from(this.markets.values()),
-      candles: SEED_CANDLES
+      candles,
+      candlesLastUpdatedAt: lastUpdatedAt
     };
   }
 
@@ -240,6 +244,10 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   async getSpotListingById(spotListingId: string) {
     return this.spotListings.get(spotListingId) ?? null;
   }
+  async saveSpotListing(listing: SpotListingEntity) {
+    this.spotListings.set(listing.id, listing);
+    return listing;
+  }
   async fillSpotListing(params: {
     spotListingId: string;
     buyerUserId: string;
@@ -256,10 +264,37 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
     this.spotListings.set(l.id, updated);
     const balKey = `${l.campaignId}:${params.buyerUserId}`;
     this.shareBalances.set(balKey, (this.shareBalances.get(balKey) ?? 0) + params.units);
+    this.spotFills.push({
+      id: `fill-${this.spotFills.length + 1}`,
+      spotListingId: l.id,
+      campaignId: l.campaignId,
+      buyerUserId: params.buyerUserId,
+      sellerUserId: l.sellerUserId,
+      units: params.units,
+      unitPriceSmallestUnits: l.unitPriceSmallestUnits,
+      txSignature: `demo-fill-${Date.now()}-${this.spotFills.length + 1}`,
+      filledAt: new Date()
+    });
     return updated;
+  }
+  async listSpotFills(campaignId?: string) {
+    return campaignId
+      ? this.spotFills.filter((f) => f.campaignId === campaignId)
+      : [...this.spotFills];
   }
   async getDistributionCycleById(cycleId: string) {
     return this.cycles.get(cycleId) ?? null;
+  }
+  async saveDistributionCycle(cycle: DistributionCycleEntity) {
+    this.cycles.set(cycle.id, cycle);
+    return cycle;
+  }
+  async getDistributionApproval(cycleId: string) {
+    return this.distributionApprovals.get(cycleId) ?? null;
+  }
+  async saveDistributionApproval(approval: DistributionApprovalEntity) {
+    this.distributionApprovals.set(approval.cycleId, approval);
+    return approval;
   }
   async getHolderShareUnits(campaignId: string, userId: string) {
     return this.shareBalances.get(`${campaignId}:${userId}`) ?? 0;
@@ -276,6 +311,17 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
       });
     }
     return true;
+  }
+  async recordCampaignReview(review: CampaignReviewEntity) {
+    this.campaignReviews.push(review);
+    return review;
+  }
+  async getMilestoneById(milestoneId: string) {
+    return this.milestones.get(milestoneId) ?? null;
+  }
+  async saveMilestone(milestone: CampaignMilestoneEntity) {
+    this.milestones.set(milestone.id, milestone);
+    return milestone;
   }
   async getOpinionMarketById(marketId: string) {
     return this.markets.get(marketId) ?? null;
