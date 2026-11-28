@@ -1,3 +1,4 @@
+import "./globals.css";
 import type { ReactNode } from "react";
 import { EncorePollarProvider } from "@/providers/pollar-provider";
 

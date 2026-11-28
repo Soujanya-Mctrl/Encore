@@ -56,5 +56,35 @@
     "tokenTransfer": "2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW",
     "tokenAmountSmallestUnits": "1000000",
     "explorerUrl": "https://explorer.solana.com/tx/2yuWScZY8ipAhiPStBsLw2oAd1ZQvUbtSpQscyLpjeNV2DDa2kRnYPRneMtMY2xFEzMDCHAbWEoCxGByuk8ZZEmW?cluster=devnet"
+  },
+  "elevenlabs": {
+    "checkedAt": "2026-11-27T20:21:49.485Z",
+    "apiKeyConfigured": true,
+    "agentIdConfigured": true,
+    "account": {
+      "httpStatus": 200,
+      "passed": true
+    },
+    "agents": {
+      "httpStatus": 200,
+      "passed": true,
+      "count": 1,
+      "encoreMatches": 1
+    },
+    "liveConversation": {
+      "status": "not_run",
+      "reason": "API/session authorization verified; live voice and read-only tool execution are separate checks"
+    },
+    "agentIdLinked": true,
+    "agent": {
+      "passed": true,
+      "httpStatus": 200,
+      "inlineToolCount": 2,
+      "referencedToolCount": 0
+    },
+    "sessionAuthorization": {
+      "passed": true,
+      "httpStatus": 200
+    }
   }
 }

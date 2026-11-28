@@ -1,0 +1,18 @@
+# Phase 2 registry and catalog handoff
+
+The Next.js web and API workflow for artist upload, Music Passport, review, Solana registration, and public discovery passed on 28 November 2026 using disposable synthetic audio. The three approved demo MP3s and their metadata are still needed to populate the live catalog. Web staging is assigned to the project owner.
+
+1. In Artist Studio, an authenticated artist enters release metadata and attests to contributor consent and preview permission. The same-origin API issues an upload capability for a single private object. Finalization checks MP3 frame structure, duration and size, hashes the bytes and creates the draft and Passport in one database transaction.
+2. A Music Passport stores three independent fields for declared creative origin, evidence status and rights. Declared categories receive `SELF_DECLARED` evidence status. An undisclosed origin stays `UNKNOWN` with `UNVERIFIED` evidence. A new draft revision links to the previous Passport hash and preserves its history. Submission freezes the version for independent reviewer approval.
+3. The owner signs the registry transaction with a verified linked Solana wallet. Encore checks the finalized program accounts and matching hashes before publication. Supabase maintains the public search projection and issues a short-lived signed preview URL on playback.
+4. Discover supports public keyword search, origin and genre filters, and pagination. Artist pages list published releases. Track pages show the Passport history and link to the finalized commitment.
+
+The live workflow uses the Next.js confirmation route for reconciliation. It waits for finalized account state when the artist confirms. The architecture also describes a future background reconciliation worker. Playback checks the database publication state. Chain pauses made directly outside the app still require reconciliation to update that projection. Upload validation runs during finalization and checks MP3 structure and limits.
+
+The devnet tests verified authority, monotonic versions, previous-hash matching, duplicate prevention, pause enforcement and the immutability of older versions. The live API and browser tests exercised private uploads, independent review, finality, public search and signed playback. Pollar had an intermittent verification failure in an earlier combined run and passed on a clean-server retry and in the later suite. The final registry browser run passed on the production build, including keyword, origin and genre filters and actual MP3 loading. The production build, web and shared TypeScript checks, and 46 unit tests passed. [Live results](../testing/PHASE_TWO_LIVE_RESULTS.json)
+
+For a manual run, open `/studio/create` as an onboarded artist, save and submit a draft, and open `/admin/reviews` as a separate account with the reviewer or admin role. The approved release’s Passport page prompts the artist to sign using the same verified external wallet linked to their profile. Use a devnet-funded wallet.
+
+The seed command validates one MP3 and `metadata.json` in each of `.local/demo-tracks/human-created`, `.local/demo-tracks/ai-assisted`, and `.local/demo-tracks/ai-generated` before making writes. `pnpm demo:seed` uses the authorized demo releases and the devnet demo signing wallet, records progress in ignored local state, and verifies each release in its category. Real demo audio has yet to be supplied. The temporary test release and its private audio were removed after the checks.
+
+[Architecture diagram](../diagrams/architecture/encore-phase-two.html) · [Deployment history](../architecture/DEVNET_DEPLOYMENTS.md) · [PDF phase progress](PROGRESS_SNAPSHOT.md)

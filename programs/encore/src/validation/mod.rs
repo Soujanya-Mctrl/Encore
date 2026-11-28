@@ -10,7 +10,7 @@ pub fn assert_passport_eligible(
     require!(!track.paused, EncoreError::TrackPaused);
     require!(
         track.current_version == expected_version
-            && track.current_manifest_hash == expected_manifest_hash,
+            && track.current_hash == expected_manifest_hash,
         EncoreError::StalePassportVersion
     );
     Ok(())

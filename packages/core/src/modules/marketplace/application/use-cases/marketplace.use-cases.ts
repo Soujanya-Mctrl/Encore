@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { err, ok, type Result } from "../../../../kernel/result.js";
 import type { ClockPort } from "../../../../kernel/ports.js";
 import type { TrackPassportSummary } from "@encore/contracts";
@@ -79,7 +78,7 @@ export async function prepareDirectSupportIntent(
   const amount = BigInt(params.amountSmallestUnits);
   if (amount <= 0n) return err(new Error("Support amount must be positive"));
 
-  const nonce = crypto.randomBytes(8).readBigUInt64LE().toString();
+  const nonce = new DataView(crypto.getRandomValues(new Uint8Array(8)).buffer).getBigUint64(0).toString();
   const unsignedTx = await chain.buildDirectSupportTx({
     payerWallet: params.payerWallet,
     artistWallet: eligible.value.artistWallet,
