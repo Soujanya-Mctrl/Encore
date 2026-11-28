@@ -12,5 +12,8 @@
   "devDependencies": {
     "@encore/config": "workspace:*",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@solana/web3.js": "1.95.8"
   }
 }

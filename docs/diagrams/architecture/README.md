@@ -10,3 +10,5 @@ The HTML documents are self-contained. Download an HTML file and open it in a br
 | [Yes/No prediction market](encore-artist-first-marketplace.html#view-6) | [Improvement scope](encore-yes-no-market-improvement.png) | Optional devnet follow-on using a separate payout vault and the campaign's on-chain outcome |
 
 The marketplace blueprints are design alternatives. The diagrams describe proposed flows and do not change the repository's current implementation or establish a live offering. The sample chart uses synthetic data.
+
+The Phase 2 implementation diagram follows the upload, review, devnet commitment and listener paths that were exercised in the live checks. [Offline HTML](encore-phase-two.html) · [Light PNG](encore-phase-two.png) · [Dark PNG](encore-phase-two-dark.png) · [Template](encore-phase-two.template.html). Built with [stack-diagram](https://github.com/caru-ini/stack-diagram/tree/1b375941783ff0b1503b91afa079cdf59a966523/skills/stack-diagram).

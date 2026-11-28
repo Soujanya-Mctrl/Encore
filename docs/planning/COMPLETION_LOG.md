@@ -6,7 +6,7 @@
 
 ## 1. Current Project State
 
-- **Current Phase:** `PDF Phase 1 / H00–02 — Engineering checkpoint verified; voice deferred and gate limitations documented`
+- **Current Phase:** `PDF Phase 2 / H02–10 — registry, upload, Music Passport and catalog verified; demo audio and web staging pending`
 - **Architecture Style:** `TypeScript Monorepo (pnpm + Turborepo) + Modular Monolith + Single Anchor Program`
 - **PRD Version:** `1.0` (`26 November 2026`)
 - **Code Freeze Target:** `H38` | **Submission Target:** `H43`
@@ -18,8 +18,8 @@
 | Phase | Target Window | Gate Criteria | Status | Completed At | Owner |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Doc & Arch Lock** | Pre-H00 | Wiki `README.md`, `PRD.md`, diagrams, modular monolith blueprint, security & build docs | `Done` | `2026-11-26` | Coordinator |
-| **Gate 1: Spike** | `H00–02` | Pinned versions, devnet funds, test-USDC mint, ElevenLabs session, Pollar test, 3 track clearances | `Partial: live engineering checks verified; voice deferred` | `2026-11-27 (partial)` | A / B / R&Q |
-| **Gate 2: Registry** | `H02–10` | `PassportVersion` on-chain + staging web + 3 searchable categories | `Pending` | — | A / B |
+| **Gate 1: Spike** | `H00–02` | Pinned versions, devnet funds, test-USDC mint, ElevenLabs session, Pollar test, 3 track clearances | `Partial: engineering and ElevenLabs credentials verified; live voice/tool pending` | `2026-11-27 (partial)` | A / B / R&Q |
+| **Gate 2: Registry** | `H02–10` | `PassportVersion` on-chain + staging web + 3 searchable categories | `Partial: deployed registry and catalog flow verified` | — | A / B |
 | **Gate 3: Economy** | `H10–20` | Devnet tip + primary buy → resale → redeem + replay rejection | `Pending` | — | A / B / R&Q |
 | **Gate 4: Voice/Rights** | `H20–30` | Voice → support flow, Firecrawl brief match, appeal version update | `Pending` | — | A / B / R&Q |
 | **Gate 5: Code Freeze** | `H30–38` | >=20 contract tests + `tests/security/` green, E2E green, security checklist green | `Pending` | — | All |
@@ -49,7 +49,7 @@
 
 | Resource | Network / Environment | Identifier / URL | Verified At |
 | :--- | :--- | :--- | :--- |
-| **Anchor Program ID** | Solana Devnet | `TBD (H02–10)` | — |
+| **Anchor Program ID** | Solana Devnet | `5y78zJvy7hnz2XpBRFLeqVh4Urt4ZEFPsDJHCqotLUu8` ([history](../architecture/DEVNET_DEPLOYMENTS.md)) | `2026-11-28` |
 | **Test-USDC Mint** | Solana Devnet | `7H5EwCxRKPJ3rsdb88zsv3k8dEroYzYVguGUP9kjdZnP` (demo token) | `2026-11-27` |
 | **Web Staging URL** | Vercel | `TBD (H02–10)` | — |
 | **Supabase Project** | Cloud / Local | `rbwpjwhbbwssnxwmncya` (six identity tables with RLS) | `2026-11-27` |
@@ -57,6 +57,10 @@
 ---
 
 ## 5. Changelog
+
+- **`2026-11-28` — Phase 2 registry and catalog:** Deployed and verified the Solana devnet registry. Passed private upload, review, immutable Passport revision, finalized publication, search and playback checks. The live catalog awaits the three approved audio files. [Phase 2 handoff](PHASE_TWO_REPORT.md)
+
+- **`2026-11-28` — ElevenLabs credential check:** Account, agent list, existing Encore agent and signed-session URL authorization all returned HTTP 200. Linked the unique existing Encore agent in ignored `.env.local`. No API key, signed URL or user profile data published. Live voice/read-only tool execution remains unverified.
 
 - **`2026-11-27` — Phase 1 verification:** Verified live Pollar external SIWS/DPoP, Supabase identity persistence/RLS, authorized Firecrawl scrape and funded devnet test mint/transfers. Added authentication security tests and smallest-unit fee tests. ElevenLabs explicitly deferred; full original gate remains open. See [Phase 1 report](PHASE_ONE_REPORT.md).
 

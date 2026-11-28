@@ -15,7 +15,7 @@
 - **What it solves:** Listeners struggle to tell how music was made (human, AI-assisted, or AI-generated) and independent creators struggle to earn sustainable income, while binary AI labels or opaque detectors fail both groups.
 - **P0 Differentiator:** One track-specific **Music Passport** (canonical manifest hash + versioned history on Solana) that powers discovery, ElevenLabs voice explanations, direct test-USDC tips, redeemable Supporter Passes, and a non-destructive appeal workflow.
 - **Fairness Principle:** Human-created, AI-assisted, and AI-generated tracks are all welcome with valid permissions. **Missing evidence is not an AI label.** Origin labels never algorithmically penalize creator payouts.
-- **Current Status:** `PDF Phase 1 — Verified engineering checkpoint, voice deferred` — live Pollar external-wallet login, Supabase persistence/RLS, Firecrawl API and devnet mint/transfers verified. Read the [Phase 1 report](docs/planning/PHASE_ONE_REPORT.md) for evidence and open gate items before starting Phase 2.
+- **Current Status:** Phase 2 registry, Music Passport, private uploads and public catalog verified on devnet. Three demo tracks and owner-managed web staging remain. See the [Phase 2 handoff](docs/planning/PHASE_TWO_REPORT.md).
 
 ---
 
