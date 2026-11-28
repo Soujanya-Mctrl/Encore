@@ -18,7 +18,7 @@ Start with the [project overview](../README.md) for the pitch, current implement
 1. Read [`product/PRODUCT_DESIGN.md`](product/PRODUCT_DESIGN.md) for personas, `FR01`–`FR11` acceptance criteria, visual identity, and the 3-minute demo script.
 2. Read [`product/TAXONOMY_AND_FAIRNESS.md`](product/TAXONOMY_AND_FAIRNESS.md) for the 3-axis classification model and appeal workflow.
 3. Use [`legal/RIGHTS_AND_LICENSING.md`](legal/RIGHTS_AND_LICENSING.md) and [`legal/PRIVACY_AND_TERMS.md`](legal/PRIVACY_AND_TERMS.md) to assemble creator documentation packs (`D01`–`D10`) and demo fixtures (`H01`, `A01`, `G01`).
-4. Track verification in [`testing/TEST_PLAN_AND_REPORT.md`](testing/TEST_PLAN_AND_REPORT.md) and [`security/AUDIT_LOG.md`](security/AUDIT_LOG.md).
+4. Follow [`testing/UI_BACKEND_INTEGRATION_WALKTHROUGH.md`](testing/UI_BACKEND_INTEGRATION_WALKTHROUGH.md) to run Next.js, Expo Web, and Android against the shared API. Track verification in [`testing/TEST_PLAN_AND_REPORT.md`](testing/TEST_PLAN_AND_REPORT.md) and [`security/AUDIT_LOG.md`](security/AUDIT_LOG.md).
 
 ### For Judges & Reviewers
 - **Executive PRD:** [`PRD.md`](PRD.md)

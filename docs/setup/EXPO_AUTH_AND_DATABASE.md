@@ -4,10 +4,12 @@ Use the Next.js API as the shared backend for Expo web and native. Both sessions
 
 | Client | API transport | Credential |
 | --- | --- | --- |
-| Expo web | Proxy `/api/v1/*` and `/login` to Next.js on the same public origin. Preserve the original Origin, and pass through response cookies. | Encore HttpOnly cookie |
+| Expo web | In production, proxy `/api/v1/*` and `/login` to Next.js on the same public origin. For local development, set `EXPO_PUBLIC_ENCORE_WEB_API_URL` and allow the exact Expo origin in `ENCORE_WEB_CLIENT_ORIGINS`; the API uses credentialed CORS for those origins. | Encore HttpOnly cookie |
 | Expo native | Set `EXPO_PUBLIC_ENCORE_API_URL` to the HTTPS Next.js URL. A local Android emulator can reach the host at `http://10.0.2.2:3000`. | Native bearer token kept in platform secure storage |
 
 For native sign-in, generate a random state and an RFC 7636 verifier. Keep both in app memory until the system browser returns. Set `codeChallenge` to the unpadded base64url SHA-256 digest of the verifier. `apps/mobile/src/lib/encore-auth.ts` provides the login URL, callback validation, code exchange, current session, onboarding, and logout methods. The exact default callback is `encore://auth/callback`, which uses the existing Expo scheme. `ENCORE_NATIVE_REDIRECT_URIS` accepts an explicit comma-separated list if the app uses a different registered callback.
+
+The local Expo web configuration points `EXPO_PUBLIC_ENCORE_WEB_API_URL` at `http://localhost:3000` and permits Expo origins `http://localhost:8081` and `http://127.0.0.1:8081`. Keep production on the same-origin proxy when possible; otherwise set a narrow HTTPS origin allowlist.
 
 1. Open `nativeBrowserLoginUrl({ codeChallenge, redirectUri, state })` in the system browser.
 2. After the browser sign-in, the user chooses **Connect app**. Use `readNativeAuthCallback` to verify the redirect and the original state.

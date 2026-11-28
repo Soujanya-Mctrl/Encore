@@ -2,7 +2,22 @@ import { useState } from "react";
 import { Link } from "expo-router";
 import { Linking, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as Crypto from "expo-crypto";
+function generateUUID(): string {
+  try {
+    const modules = (globalThis as any)?.expo?.modules;
+    if (modules?.ExpoCrypto) {
+      const Crypto = require("expo-crypto");
+      if (Crypto?.randomUUID) return Crypto.randomUUID();
+    }
+  } catch {
+    // fallback
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 import { LICENSE_USES, RIGHTS_PROVIDERS, RightsActionSchema, type DiscoveryTrack, type LicenseInquiry, type RightsAction, type RightsDeclaration, type RightsRecord } from "@encore/contracts";
 import { encoreColors as c } from "@/features/encore/ui/tokens";
 import { rightsWorkspace, writeRights } from "./api";
@@ -95,7 +110,7 @@ function InquiryForm({ track, busy, run }: { track: DiscoveryTrack; busy: boolea
     <Field label="Term in months" value={term} onChangeText={change(setTerm)} keyboardType="number-pad" />
     <Field label="Project details" value={details} onChangeText={change(setDetails)} multiline maxLength={1000} />
     <Action label="Send license inquiry" disabled={busy} run={() => {
-      const id = requestId || Crypto.randomUUID();
+      const id = requestId || generateUUID();
       setRequestId(id);
       run({ action: "request", trackId: track.id, version: track.manifest.version, requestId: id, use: use!, territory, termMonths: Number(term), details });
     }} />

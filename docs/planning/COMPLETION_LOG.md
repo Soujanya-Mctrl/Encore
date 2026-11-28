@@ -61,6 +61,8 @@
 
 ## 5. Changelog
 
+- **`2026-11-28` — Expo backend integration and phase audit:** Connected the Expo Studio dashboard, content list, release detail, and private MP3 draft upload to the authenticated Encore APIs. Connected Passes and Portfolio to the owner portfolio endpoint. Added an Expo Web API origin with a narrow local CORS allowlist, and corrected native PKCE to use cryptographic randomness and an S256 challenge. Verified `pnpm typecheck`, `pnpm test` (95 tests), `pnpm lint`, web production build, Android export, and Expo Web export. Production API checks returned 200 for health, catalog, marketplace, and allowed Expo Web preflight; `/auth/me` correctly returned 401 without a session. Rust/Anchor tests, device/browser sign-in, devnet transaction acceptance, hosted rollout, Phase 9 voice tools, and Phase 10–14 completion remain open; `cargo` and `anchor` are not installed here.
+
 - **28 November 2026. Phases 5 and 6.** Added private rights review, provider restrictions, license inquiries, and playback authorization. Verified search and actual browser audio against the same catalog in both web clients. [Implementation and rollout](../architecture/RIGHTS_AND_PLAYER_IMPLEMENTATION.md)
 
 - **`2026-11-28` — Phase 2 registry and catalog:** Deployed and verified the Solana devnet registry. Passed private upload, review, immutable Passport revision, finalized publication, search and playback checks. The live catalog awaits the three approved audio files. [Phase 2 handoff](PHASE_TWO_REPORT.md)

@@ -3,8 +3,9 @@ import { Platform } from "react-native";
 const nativeApiBase = (
   process.env.EXPO_PUBLIC_ENCORE_API_URL || process.env.EXPO_PUBLIC_API_URL || ""
 ).trim().replace(/\/+$/, "");
+const webApiBase = (process.env.EXPO_PUBLIC_ENCORE_WEB_API_URL || "").trim().replace(/\/+$/, "");
 
-export const encoreApiBase = Platform.OS === "web" ? "" : nativeApiBase;
+export const encoreApiBase = Platform.OS === "web" ? webApiBase : nativeApiBase;
 export const encoreApiConfigured = Platform.OS === "web" || Boolean(encoreApiBase);
 
 export class EncoreApiError extends Error {
@@ -28,7 +29,7 @@ export async function encoreApiFetch<T>(
   if (bearerToken) requestHeaders.set("authorization", `Bearer ${bearerToken}`);
   const response = await fetch(`${encoreApiBase}${path}`, {
     ...rest,
-    credentials: Platform.OS === "web" && !requestHeaders.has("authorization") ? "same-origin" : "omit",
+    credentials: Platform.OS === "web" && !requestHeaders.has("authorization") ? "include" : "omit",
     headers: requestHeaders
   });
   if (!response.ok) {

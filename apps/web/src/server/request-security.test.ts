@@ -8,6 +8,12 @@ describe("Cookie-authenticated mutation requests", () => {
       method: "POST", headers: { origin: "http://localhost:3000", "content-type": "application/json" }
     }))).toBeNull();
   });
+  it("accepts an explicitly configured Expo web origin", () => {
+    vi.stubEnv("ENCORE_WEB_CLIENT_ORIGINS", "http://localhost:8081,http://127.0.0.1:8081");
+    expect(rejectCrossOriginRequest(new Request("http://localhost:3000/api", {
+      method: "POST", headers: { origin: "http://localhost:8081", "content-type": "application/json" }
+    }))).toBeNull();
+  });
   const invalidHeaders: Record<string, string>[] = [
     { origin: "https://other.example", "content-type": "application/json" },
     { origin: "http://localhost:3000", "content-type": "text/plain" },

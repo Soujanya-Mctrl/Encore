@@ -1,4 +1,5 @@
 import type { MusicPassportManifest, ProvenanceBinding, ProvenanceResult, ProvenanceSubmission, ReleaseInput, StudioDraftEdit, StudioTrack } from "@encore/contracts";
+import { MAX_AUDIO_BYTES } from "@encore/contracts";
 import { encoreApiFetch } from "./api-client";
 
 type Session = string | undefined;
@@ -18,6 +19,21 @@ export function enableStudio(profile: StudioProfile, token?: Session) {
 
 export function listStudioTracks(bearerToken?: Session) {
   return encoreApiFetch<{ channel: StudioChannel; tracks: StudioTrack[] }>("/api/v1/studio/tracks", { bearerToken });
+}
+
+export async function submitStudioUpload(uri: string, metadata: ReleaseInput, token?: Session) {
+  const source = await fetch(uri);
+  if (!source.ok) throw new Error("Could not read the selected audio file");
+  const audio = await source.blob();
+  if (!audio.size || audio.size > MAX_AUDIO_BYTES) throw new Error("MP3 must be between 1 byte and 20 MB");
+  const { url: signedUrl, grant } = await requestStudioUpload(audio.size, token);
+  const uploaded = await fetch(signedUrl, {
+    method: "PUT",
+    headers: { "content-type": "audio/mpeg", "x-upsert": "false" },
+    body: audio
+  });
+  if (!uploaded.ok) throw new Error("Audio upload failed");
+  return finalizeStudioUpload(grant, metadata, token);
 }
 
 export function getStudioTrack(id: string, bearerToken?: Session) {
