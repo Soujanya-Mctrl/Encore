@@ -1,6 +1,6 @@
 # Authentication & Wallet Onboarding Architecture
 
-## 1. Dual-Path Authentication Sequence
+## 1. Current Authentication Sequence
 
 ```mermaid
 sequenceDiagram
@@ -10,12 +10,9 @@ sequenceDiagram
     participant API as Encore Next.js API (/api/v1/auth)
     participant DB as Supabase Postgres
 
-    alt Web2 Social / Email OTP (Pollar)
-        U->>P: Login (Google / GitHub / Email OTP)
-        P-->>U: Verified DPoP Session + Embedded Solana Wallet
+    alt Legacy Pollar exchange request
         U->>API: POST /api/v1/auth/pollar/session
-        API->>DB: Upsert profile + auth_identities + embedded wallet
-        API-->>U: Set HttpOnly encore_session cookie
+        API-->>U: 503; no identity writes or session cookie
     else Web3 External Wallet (SIWS)
         U->>P: Connect Phantom / Solflare / Backpack
         U->>API: POST /api/v1/auth/siws/challenge (address)
@@ -33,9 +30,10 @@ sequenceDiagram
 
 ## 2. Session Verification & Trust Boundaries
 
-- Pollar tokens are DPoP-bound to a non-extractable browser WebCrypto keypair; Encore's Next.js backend **never** trusts raw client-side Pollar flags as backend authorization.
-- After verified Web3 SIWS or Pollar session exchange, Encore issues an **HMAC-SHA256 signed `HttpOnly`, `SameSite=Lax` cookie** (`encore_session`, `2h` TTL).
-- All protected routes (`/studio/*`, `/admin/*`, `/api/v1/auth/onboarding`) verify `encore_session` server-side via `requireAuthenticatedUser()`.
+- Social and email sign-in is paused. Re-enable it only when Encore has a verified server-side Pollar exchange that derives the provider identity and wallet from trusted evidence.
+- After wallet verification, Encore issues a v2 HMAC-SHA256 signed HttpOnly cookie with SameSite=Lax, a two-hour lifetime and Secure in production. Tokens issued before v2 require a new sign-in.
+- Production requires an environment-specific random session secret of at least 32 characters. Development can use an in-process random fallback.
+- Onboarding requires a valid session and allows listener or artist. The Studio page requires artist or admin. The review page requires reviewer or admin. These are page-level role gates. Channel membership, scoped writes and reviewer assignment are separate planned controls.
 
 ---
 

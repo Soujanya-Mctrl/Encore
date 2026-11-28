@@ -14,16 +14,14 @@ export async function verifyWalletChallenge(
     address: string;
     nonce: string;
     message: string;
+    messageDigest: string;
+    intendedAction: "login" | "link_wallet";
     signatureBase64: string;
   }
 ): Promise<Result<{ address: string; intendedAction: "login" | "link_wallet" }, Error>> {
   if (!isValidSolanaAddress(params.address)) {
     return err(new Error("Invalid Solana address"));
   }
-  if (!params.message.includes(params.nonce) || !params.message.includes(params.address)) {
-    return err(new Error("Challenge message does not bind nonce and address"));
-  }
-
   const verifiedSig = await verifier.verifyEd25519({
     address: params.address,
     message: params.message,
@@ -37,10 +35,11 @@ export async function verifyWalletChallenge(
     params.nonce,
     params.address,
     clock.now(),
-    params.message
+    params.messageDigest,
+    params.intendedAction
   );
   if (!consumed) {
-    return err(new Error("Challenge expired, missing, or already consumed"));
+    return err(new Error("Invalid or expired wallet challenge"));
   }
 
   return ok({ address: params.address, intendedAction: consumed.intendedAction });

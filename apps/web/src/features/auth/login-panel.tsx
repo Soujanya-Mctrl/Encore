@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import { ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import { useEncoreAuth } from "@/providers/pollar-provider";
 
 export function LoginPanel() {
@@ -11,19 +11,10 @@ export function LoginPanel() {
     user,
     loading,
     error,
-    pollarConfigured,
     discoveredWallets,
-    loginWithGoogle,
-    loginWithGithub,
-    sendEmailOtp,
-    verifyEmailOtp,
     connectAndSignInSolana,
     clearError
   } = useEncoreAuth();
-
-  const [email, setEmail] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -34,19 +25,6 @@ export function LoginPanel() {
     }
   }, [user, router]);
 
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    sendEmailOtp(email.trim());
-    setOtpSent(true);
-  };
-
-  const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpCode.trim()) return;
-    verifyEmailOtp(otpCode.trim());
-  };
-
   return (
     <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-[#1B1E30] p-6 shadow-2xl">
       <div className="mb-6 text-center">
@@ -56,8 +34,7 @@ export function LoginPanel() {
         </span>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-white">Welcome to Encore</h1>
         <p className="mt-1.5 text-sm text-slate-300">
-          Sign in with Google or email — no wallet extension or seed phrase required. Or connect
-          your Solana wallet directly.
+          Sign in with a Solana wallet. Social and email sign-in are temporarily unavailable.
         </p>
       </div>
 
@@ -72,83 +49,6 @@ export function LoginPanel() {
           </button>
         </div>
       )}
-
-      {!pollarConfigured && (
-        <div className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-          Pollar publishable key not set (`NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`). Wallet Standard
-          SIWS remains active.
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={loginWithGoogle}
-          disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-50"
-        >
-          Continue with Google
-        </button>
-
-        <button
-          type="button"
-          onClick={loginWithGithub}
-          disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-50"
-        >
-          Continue with GitHub
-        </button>
-
-        <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} className="space-y-2 pt-1">
-          <label className="block text-xs font-medium text-slate-300">
-            Continue with Email OTP
-          </label>
-          {!otpSent ? (
-            <div className="flex gap-2">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-700 bg-[#151725] px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#6954CF] focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#6954CF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5B46C0] disabled:opacity-50"
-              >
-                <Mail className="h-4 w-4" />
-                Send
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                required
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                placeholder="Enter 6-digit code"
-                className="w-full rounded-xl border border-slate-700 bg-[#151725] px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#6954CF] focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="shrink-0 rounded-xl bg-[#168579] px-4 py-2 text-sm font-semibold text-white hover:bg-[#137268] disabled:opacity-50"
-              >
-                Verify
-              </button>
-            </div>
-          )}
-        </form>
-      </div>
-
-      <div className="my-5 flex items-center gap-3 text-xs text-slate-500">
-        <div className="h-px flex-1 bg-slate-800" />
-        <span>OR CONNECT SOLANA WALLET</span>
-        <div className="h-px flex-1 bg-slate-800" />
-      </div>
 
       <div className="space-y-2">
         {discoveredWallets.length > 0 ? (
@@ -169,8 +69,7 @@ export function LoginPanel() {
           ))
         ) : (
           <p className="rounded-xl border border-slate-800 bg-[#151725] px-3 py-2.5 text-center text-xs text-slate-400">
-            No browser Solana wallet detected (Phantom, Solflare, Backpack). Social/email login
-            automatically provisions an embedded wallet.
+            No browser Solana wallet detected. Open Encore in a browser with Phantom, Solflare, or Backpack.
           </p>
         )}
       </div>

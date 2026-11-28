@@ -1,36 +1,35 @@
 import crypto from "node:crypto";
-import { NextResponse } from "next/server";
+import { authJson, guardBrowserAuthWrite } from "@/server/browser-auth-request";
 import { SiwsVerifyRequestSchema } from "@encore/contracts";
 import { authenticateOrCreateUser, verifyWalletChallenge } from "@encore/core";
 import { getServerContainer } from "@/server/container";
-import { attachSessionCookie } from "@/server/request-context";
-import { rejectCrossOriginRequest } from "@/server/request-security";
+import { attachSessionCookie, SESSION_TTL_SECONDS } from "@/server/request-context";
 
 export async function POST(req: Request) {
-  const rejected = rejectCrossOriginRequest(req);
-  if (rejected) return rejected;
+  const blocked = guardBrowserAuthWrite(req);
+  if (blocked) return blocked;
+
   const body = await req.json().catch(() => null);
   const parsed = SiwsVerifyRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
+    return authJson(
       { error: "Invalid SIWS verification payload", details: parsed.error.flatten() },
-      { status: 400 }
+      400
     );
   }
 
-  const { challenges, verifier, clock, users, sessions } = getServerContainer();
+  const { challenges, verifier, clock, users, sessions, activeSessions } = getServerContainer();
   const challengeResult = await verifyWalletChallenge(challenges, verifier, clock, {
     address: parsed.data.address,
     nonce: parsed.data.nonce,
     message: parsed.data.message,
+    messageDigest: crypto.createHash("sha256").update(parsed.data.message).digest("hex"),
+    intendedAction: "login",
     signatureBase64: parsed.data.signatureBase64
   });
 
   if (!challengeResult.ok) {
-    return NextResponse.json({ error: challengeResult.error.message }, { status: 401 });
-  }
-  if (challengeResult.value.intendedAction !== "login") {
-    return NextResponse.json({ error: "Wallet linking requires an authenticated account" }, { status: 403 });
+    return authJson({ error: challengeResult.error.message }, 401);
   }
 
   const shortAddr = `${parsed.data.address.slice(0, 4)}...${parsed.data.address.slice(-4)}`;
@@ -43,17 +42,19 @@ export async function POST(req: Request) {
   });
 
   if (!userResult.ok) {
-    return NextResponse.json({ error: userResult.error.message }, { status: 409 });
+    return authJson({ error: userResult.error.message }, 409);
   }
 
+  const sessionId = crypto.randomUUID();
   const token = await sessions.issueSessionToken({
     userId: userResult.value.id,
     roles: userResult.value.roles,
-    sessionId: crypto.randomUUID()
+    sessionId
   });
 
   const wallets = await users.listWalletsForUser(userResult.value.id);
-  const res = NextResponse.json({ user: userResult.value, wallets });
+  await activeSessions.create(sessionId, userResult.value.id, new Date(clock.now().getTime() + SESSION_TTL_SECONDS * 1000));
+  const res = authJson({ user: userResult.value, wallets });
   attachSessionCookie(res, token);
   return res;
 }
