@@ -103,6 +103,7 @@ describe("Registry use cases", () => {
       1,
       expect.objectContaining({ version: 2, previousHash: "a".repeat(64) }),
       "a".repeat(64),
+      { title: "Demo", artistName: "Artist", genre: "Ambient", description: "" },
     );
   });
 });

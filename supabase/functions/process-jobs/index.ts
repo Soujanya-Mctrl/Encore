@@ -1,15 +1,9 @@
-import { verifyJobCaller } from "../_shared/authorization.ts";
-import { logJobEvent } from "../_shared/logger.ts";
+import { createQueueClient } from "../_shared/queue-client.ts";
+import { createJobWorker } from "./worker.ts";
 
-// Supabase Edge Function entrypoint for bounded PGMQ job consumption
-Deno.serve(async (req: Request) => {
-  const secret = Deno.env.get("JOB_RUNNER_SECRET") ?? "";
-  if (!verifyJobCaller(req.headers.get("authorization"), secret)) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  logJobEvent("info", "process-jobs invoked");
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { "content-type": "application/json" }
-  });
-});
+const projectUrl = Deno.env.get("SUPABASE_URL");
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+Deno.serve(createJobWorker({
+  secret: Deno.env.get("JOB_RUNNER_SECRET") ?? "",
+  client: projectUrl && serviceRoleKey ? createQueueClient(projectUrl, serviceRoleKey) : null,
+}));

@@ -1,29 +1,45 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import type { PkceBrowserRequest } from "@encore/contracts";
 import { useEncoreAuth } from "@/providers/pollar-provider";
+import { NativeHandoff } from "./native-handoff";
 
-export function LoginPanel() {
+export function LoginPanel({ nativeHandoff, socialSignInEnabled }: {
+  nativeHandoff: PkceBrowserRequest | null;
+  socialSignInEnabled: boolean;
+}) {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [codeRequested, setCodeRequested] = useState(false);
   const {
     user,
     loading,
     error,
+    pollarConfigured,
     discoveredWallets,
     connectAndSignInSolana,
-    clearError
+    clearError,
+    loginWithGoogle,
+    loginWithGithub,
+    sendEmailOtp,
+    verifyEmailOtp
   } = useEncoreAuth();
+  const socialAvailable = socialSignInEnabled && pollarConfigured;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || nativeHandoff) return;
     if (user.onboardingStatus === "completed") {
       router.push("/discover");
     } else {
       router.push("/onboarding");
     }
-  }, [user, router]);
+  }, [user, router, nativeHandoff]);
+
+  if (user && nativeHandoff) return <NativeHandoff request={nativeHandoff} displayName={user.displayName} />;
 
   return (
     <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-[#1B1E30] p-6 shadow-2xl">
@@ -34,7 +50,7 @@ export function LoginPanel() {
         </span>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-white">Welcome to Encore</h1>
         <p className="mt-1.5 text-sm text-slate-300">
-          Sign in with a Solana wallet. Social and email sign-in are temporarily unavailable.
+          {socialAvailable ? "Sign in with email, a social account, or a Solana wallet." : "Sign in with a Solana wallet. Social and email sign-in are temporarily unavailable."}
         </p>
       </div>
 
@@ -47,6 +63,34 @@ export function LoginPanel() {
           <button type="button" onClick={clearError} className="ml-2 underline">
             Dismiss
           </button>
+        </div>
+      )}
+
+      {socialAvailable && (
+        <div className="mb-4 space-y-2">
+          <button className="w-full rounded-xl border border-slate-600 p-2 text-white" type="button" disabled={loading} onClick={loginWithGoogle}>Continue with Google</button>
+          <button className="w-full rounded-xl border border-slate-600 p-2 text-white" type="button" disabled={loading} onClick={loginWithGithub}>Continue with GitHub</button>
+          <form className="space-y-2" onSubmit={(event) => {
+            event.preventDefault();
+            if (codeRequested) {
+              verifyEmailOtp(code.trim());
+            } else {
+              sendEmailOtp(email.trim());
+              setCodeRequested(true);
+            }
+          }}>
+            {codeRequested ? (
+              <label className="block text-sm text-white">Email verification code
+                <input className="mt-1 block w-full rounded bg-slate-900 p-2" autoComplete="one-time-code" inputMode="numeric" required maxLength={12} value={code} onChange={(event) => setCode(event.target.value)} />
+              </label>
+            ) : (
+              <label className="block text-sm text-white">Email address
+                <input className="mt-1 block w-full rounded bg-slate-900 p-2" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+              </label>
+            )}
+            <button className="w-full rounded-xl border border-slate-600 p-2 text-white" type="submit" disabled={loading}>{codeRequested ? "Verify email code" : "Send email code"}</button>
+            {codeRequested && <button className="text-sm text-white underline" type="button" onClick={() => { setCode(""); setCodeRequested(false); }}>Change email or request a new code</button>}
+          </form>
         </div>
       )}
 

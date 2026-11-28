@@ -1,27 +1,30 @@
-# Encore — Development Progress (PDF Phase Numbering)
+# Encore development phases
 
-The PDF's Section 12 is the authoritative phase sequence. The earlier 0–15 task breakdown is superseded by this mapping; authentication and database tasks belong to the initial setup/registry work rather than separate numbered PDF phases.
+This roadmap follows the 0–14 phase sequence agreed for the current build. The [PDF progress snapshot](docs/planning/PROGRESS_SNAPSHOT.md) records earlier work using the original build playbook's numbering.
 
-| PDF phase | Window | State |
+| Phase | Status | Acceptance work |
 | --- | --- | --- |
-| 1. Feasibility and setup | H00–02 | ~85%: engineering and ElevenLabs credentials/session access verified; live voice/tool and other gate checks pending |
-| 2. Registry, catalog and first deployment | H02–10 | ~85%: registry, private uploads, Passport history and searchable catalog verified. Three demo tracks and web staging pending. |
-| 3. Economic lifecycle | H10–20 | Pending |
-| 4. Voice, rights and opportunities | H20–30 | Pending; integration scaffolding only (includes `FR05a` Voice Discovery + `FR05b` ElevenLabs Studio Music Generation) |
-| 5. Integration and code freeze | H30–38 | Pending |
-| 6. Documentation and submission | H38–43 | Pending |
-| 7. Buffer | H43–48 | Pending |
+| 0. Feasibility & Setup | Complete | Toolchain, credentials, and Solana devnet setup. |
+| 1. Authentication & Onboarding | Wallet path verified locally | Browser and Expo API sessions, revocation, and listener/artist onboarding verified. The hosted schema and live Pollar email, social, and embedded-wallet paths still need verification. |
+| 2. Database & Infrastructure | Database and worker verified locally | Schema, access controls, private storage policy, real PGMQ delivery, retries, and dead-letter handling verified. Hosted migration and worker activation remain pending. |
+| 3. Artist Studio | Backend implemented | Expo-facing owner APIs cover channel activation, private uploads, credits and metadata, revision submission, and catalog delisting. Expo screens and hosted rollout are pending. |
+| 4. Provenance Engine | Scoped proof implemented | Demo and signed-instrumental proof paths create immutable Passport revisions. Production issuer integration and full-track coverage remain pending. |
+| 5. Licensing & Rights Management | Pending | Permission checks, provider restrictions, and rights documentation. |
+| 6. Music Discovery & Player | Partial | Catalog search and signed playback exist. Complete demo tracks, filters, and player state. |
+| 7. Artist Monetization | Partial | Campaign, milestone, and distribution APIs and database projections are integrated. Verify Passport-bound settlement and reconciliation on devnet. |
+| 8. Supporter Marketplace | Partial | Marketplace screens and lifecycle APIs are integrated. Verify transfers, resale splits, and redemption on devnet. |
+| 9. ElevenLabs Integration | Pending | API feasibility was verified. Complete catalog-aware voice tools and supervised payment intents. |
+| 10. Firecrawl Integration | Pending | API feasibility was verified. Complete extraction, processing, and opportunity matching. |
+| 11. Creative Fairness & Moderation | Pending | Evidence reviews, corrections, appeals, and notifications. |
+| 12. Integration & Security Testing | Partial | Scoped workflow and queue checks exist. Complete cross-module, contract, and full-product end-to-end testing. |
+| 13. Deployment & UI Polish | Pending | The devnet program is recorded. The project owner handles web staging. |
+| 14. Documentation & Submission | Partial | Project and architecture docs exist. Complete the final demo, pitch, and submission. |
 
-Hours are planned elapsed build windows, not an automatically updated countdown or proof of completion. The [artist monetization delivery plan](#artist-monetization-delivery-plan) details the economic lifecycle within this phase sequence.
+See the [Expo authentication and database handoff](docs/setup/EXPO_AUTH_AND_DATABASE.md) for the client API and acceptance checks, and the [devnet deployment log](docs/architecture/DEVNET_DEPLOYMENTS.md) for recorded program addresses.
 
-## Current work
+## Planned feature details
 
-Phase 2 remains active. The upload-to-catalog flow passed with disposable audio, including a finalized Solana Passport. The three authorized demo files and metadata are needed to seed the categories. The project owner handles web staging. See the [Phase 2 handoff](docs/planning/PHASE_TWO_REPORT.md), [deployment history](docs/architecture/DEVNET_DEPLOYMENTS.md), and [phase progress snapshot](docs/planning/PROGRESS_SNAPSHOT.md).
-Continue with PDF Phase 2 registry/catalog work after reviewing [Phase 1 evidence and limitations](docs/planning/PHASE_ONE_REPORT.md). Live Pollar external-wallet authentication, Supabase persistence/RLS, Firecrawl feasibility and funded devnet mint/transfers are verified. ElevenLabs credentials and a live read-only voice tool check remain explicitly deferred by the user. Pollar social/hosted-wallet signing and exact event eligibility rules are not established.
-
-Do not renumber later phases or mark the original Phase 1 gate fully closed while these items remain outstanding. The user already confirmed three demo-track permissions; next collect their audio/metadata fixtures for the catalog.
-
-### ElevenLabs Music Generation (`FR05b` — Phase 4 Studio Integration)
+### ElevenLabs Music Generation (`FR05b` — Studio integration design)
 
 - **Scope:** Creators can generate original audio drafts directly inside **Artist Studio** via ElevenLabs Music API (`ELEVENLABS_API_KEY` server-side only), store the output + generation receipt in private Supabase Storage, and prefill a `PassportVersion` draft.
 - **Provenance & Rights Invariants:** Platform-attested ElevenLabs generations set `OriginCategory` to `AI_GENERATED` (or `AI_ASSISTED` if mixed with human stems), `EvidenceStatus` to `CORROBORATED` (backed by the ElevenLabs generation receipt), and `RightsStatus` gated by the ElevenLabs plan/Music Terms (`PREVIEW_ALLOWED` / `COMMERCIAL_CLEARED` or `RESTRICTED` — never reselling ElevenLabs Music Marketplace licenses).
@@ -46,7 +49,7 @@ Passes grant deliverable access. Project units carry a defined revenue participa
 
 ### Baseline and ownership
 
-The workspace has marketplace routes, domain use cases, a Solana adapter, and a mobile marketplace screen. The server container still wires an in-memory marketplace repository. The Anchor entry points include tips, primary pass purchases, and redemption. Pass resale and the project-unit lifecycle need full settlement integration. Two pairs of migration files share version prefixes; reconcile their ordering and inspect applied migration history before changing IDs. Treat named screens, routes, schema additions, and state transitions below as proposed until their acceptance checks pass.
+The workspace has marketplace routes, domain use cases, a Solana adapter, and a mobile marketplace screen. The server container uses the Supabase marketplace repository when database credentials are configured. The Anchor entry points include tips, primary pass purchases, and redemption. Pass resale and the project-unit lifecycle need full settlement integration. The merge preserves the existing catalog, support, and marketplace migration versions. Governance runs as version `202611280010`, after its marketplace tables. Treat named screens, routes, schema additions, and state transitions below as proposed until their acceptance checks pass.
 
 | Boundary | Responsibility |
 | --- | --- |
@@ -96,7 +99,7 @@ Real-money issuance, custody, resale and platform fees each require jurisdiction
 | Gate | Deliverable and acceptance |
 | --- | --- |
 | 0. Architecture review | Approve one reference campaign, unit price/supply rule, milestone and refund policy, revenue source, snapshot method and fee assumptions. Confirm the diagrams match the design. |
-| 1. Registry and contracts | Seed one consented eligible release; validate Passport, roles and approvals. Resolve duplicate migration versions and prove fresh reset plus upgrade from a prior schema. Verify RLS denies cross-user evidence reads. |
+| 1. Registry and contracts | Seed one consented eligible release; validate Passport, roles and approvals. Verify a fresh reset and inspect the target's applied migration history before hosted upgrades. Verify RLS denies cross-user evidence reads. |
 | 2. Tips and passes | Demonstrate tip, primary buy, list/cancel/resell, redeem, and authorized deliverable access with two wallets. Reject wrong mint/wallet, stale Passport, competing fills and duplicate redemption. |
 | 3. Campaign escrow | Demonstrate both funded and missed-goal campaigns, issuance, milestone approvals, cancellation and residual refund. Test cap/close boundaries, duplicate pledge/refund, unauthorized releases and full vault reconciliation. |
 | 4. Spot and charts | Demonstrate listing, cancellation, atomic buy and portfolio refresh. Test mismatched price/nonce, ownership transfer races, stale listing, wrong eligibility and duplicate events. Verify OHLCV against a known fixture with empty time buckets. |

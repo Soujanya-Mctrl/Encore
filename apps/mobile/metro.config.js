@@ -4,6 +4,11 @@ const path = require('path')
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname)
+const existingBlockList = config.resolver.blockList
+config.resolver.blockList = [
+  ...[existingBlockList].flat().filter(Boolean),
+  /[/\\]\._[^/\\]+$/,
+]
 
 // Apply uniwind modifications before exporting
 const uniwindConfig = withUniwindConfig(config, {

@@ -6,7 +6,7 @@ import {
   type Release,
   type ReleaseState,
 } from "@encore/core";
-import type { CatalogQuery, MusicPassportManifest } from "@encore/contracts";
+import type { CatalogQuery, MusicPassportManifest, ReleaseInput } from "@encore/contracts";
 export class SupabaseCatalogRepository implements CatalogRepositoryPort {
   private db: SupabaseClient;
   constructor(url: string, key: string) {
@@ -75,12 +75,17 @@ export class SupabaseCatalogRepository implements CatalogRepositoryPort {
     expected: ReleaseState,
     next: ReleaseState,
     actor: string,
+    expectedVersion?: number,
   ) {
-    const { error } = await this.db.rpc("encore_transition_release", {
+    const { error } = expectedVersion === undefined ? await this.db.rpc("encore_transition_release", {
       release_id: id,
       expected_state: expected,
       next_state: next,
       actor_id: actor,
+    }) : await this.db.rpc("encore_submit_studio_release", {
+      release_id: id,
+      owner_id: actor,
+      expected_version: expectedVersion,
     });
     if (error)
       throw new CatalogError(
@@ -94,16 +99,25 @@ export class SupabaseCatalogRepository implements CatalogRepositoryPort {
     expectedVersion: number,
     manifest: MusicPassportManifest,
     hash: string,
+    metadata?: Pick<ReleaseInput, "title" | "artistName" | "genre" | "description">,
   ) {
-    const { error } = await this.db.rpc("encore_append_passport", {
+    const studioWrite = Boolean(metadata || manifest.provenance);
+    const { error } = await this.db.rpc(studioWrite ? "encore_edit_studio_release" : "encore_append_passport", {
       release_id: id,
       owner_id: artistId,
       expected_version: expectedVersion,
       manifest,
       manifest_hash: hash,
+      ...(studioWrite ? { metadata: metadata ?? null } : {}),
     });
     if (error)
       throw new CatalogError("Release changed; refresh and try again", 409);
+  }
+  async delist(id: string, owner: string, version: number) {
+    const { error } = await this.db.rpc("encore_delist_studio_release", {
+      release_id: id, owner_id: owner, expected_version: version,
+    });
+    if (error) throw new CatalogError("Publication changed or is unavailable", 409);
   }
   async publish(id: string, hash: string, signature: string, owner: string) {
     const { error } = await this.db.rpc("encore_publish_release", {

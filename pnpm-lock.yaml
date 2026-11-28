@@ -278,6 +278,9 @@ importers:
       '@encore/solana-client':
         specifier: workspace:*
         version: link:../solana-client
+      '@noble/curves':
+        specifier: 1.9.7
+        version: 1.9.7
       '@pollar/core':
         specifier: 0.12.0
         version: 0.12.0(react-native@0.88.0(@babel/core@7.29.13)(@react-native/metro-config@0.88.0(@babel/core@7.29.13)(bufferutil@4.2.0))(@types/react@19.3.3)(bufferutil@4.2.0)(react@19.3.1))

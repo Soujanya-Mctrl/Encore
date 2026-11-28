@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 import { catalog } from "@/server/catalog";
 import { catalogResponse } from "@/server/catalog-http";
 import { requireAuthenticatedUser } from "@/server/request-context";
-import { rejectCrossOriginRequest } from "@/server/request-security";
+import { guardSessionAuthWrite } from "@/server/browser-auth-request";
 import { uploadGrant } from "@/server/upload-grant";
 import { MAX_AUDIO_BYTES } from "@encore/contracts";
 export async function POST(req: Request) {
-  const denied = rejectCrossOriginRequest(req);
+  const denied = guardSessionAuthWrite(req);
   if (denied) return denied;
-  const auth = await requireAuthenticatedUser(["artist"]);
+  const auth = await requireAuthenticatedUser(["artist"], req);
   if (auth.errorResponse) return auth.errorResponse;
   const body = await req.json().catch(() => null);
   if (
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       path = `quarantine/${auth.user.id}/${id}.mp3`;
     return {
       url: await catalog().storage.grant(path),
-      grant: uploadGrant(auth.user.id, id),
+      grant: uploadGrant(auth.user.id, id, body.size),
     };
   });
 }

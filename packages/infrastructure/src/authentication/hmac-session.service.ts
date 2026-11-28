@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import type { UserRole } from "@encore/contracts";
-import type { SessionTokenPort } from "@encore/core";
+import type { SessionTokenPort, SessionTransport } from "@encore/core";
 
-const SESSION_VERSION = "v2";
+const SESSION_VERSIONS = { browser: "v2", native: "v2n" } as const;
 
 interface SessionClaims {
   sub: string;
@@ -23,7 +23,9 @@ export class HmacSessionTokenService implements SessionTokenPort {
     userId: string;
     roles: readonly UserRole[];
     sessionId: string;
+    transport?: SessionTransport;
   }): Promise<string> {
+    const version = SESSION_VERSIONS[payload.transport ?? "browser"];
     const claims: SessionClaims = {
       sub: payload.userId,
       roles: payload.roles,
@@ -33,24 +35,26 @@ export class HmacSessionTokenService implements SessionTokenPort {
     const body = Buffer.from(JSON.stringify(claims)).toString("base64url");
     const sig = crypto
       .createHmac("sha256", this.secret)
-      .update(`${SESSION_VERSION}.${body}`)
+      .update(`${version}.${body}`)
       .digest("base64url");
-    return `${SESSION_VERSION}.${body}.${sig}`;
+    return `${version}.${body}.${sig}`;
   }
 
-  async verifySessionToken(token: string): Promise<{
+  async verifySessionToken(token: string, transport: SessionTransport = "browser"): Promise<{
     userId: string;
     roles: readonly UserRole[];
     sessionId: string;
   } | null> {
+    if (token.length > 4096) return null;
+    const version = SESSION_VERSIONS[transport];
     const parts = token.split(".");
-    if (parts.length !== 3 || parts[0] !== SESSION_VERSION) return null;
+    if (parts.length !== 3 || parts[0] !== version) return null;
     const [, body, sig] = parts;
     if (!body || !sig) return null;
 
     const expectedSig = crypto
       .createHmac("sha256", this.secret)
-      .update(`${SESSION_VERSION}.${body}`)
+      .update(`${version}.${body}`)
       .digest("base64url");
 
     const sigBuf = Buffer.from(sig);

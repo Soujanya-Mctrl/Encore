@@ -3,16 +3,16 @@ import { catalog } from "@/server/catalog";
 import { catalogResponse } from "@/server/catalog-http";
 import { requireAuthenticatedUser } from "@/server/request-context";
 import { getServerContainer } from "@/server/container";
-import { rejectCrossOriginRequest } from "@/server/request-security";
+import { guardSessionAuthWrite } from "@/server/browser-auth-request";
 import { SolanaRegistry } from "@encore/infrastructure";
 import { CatalogError } from "@encore/core";
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const rejected = rejectCrossOriginRequest(req);
+  const rejected = guardSessionAuthWrite(req);
   if (rejected) return rejected;
-  const auth = await requireAuthenticatedUser(["artist"]);
+  const auth = await requireAuthenticatedUser(["artist"], req);
   if (auth.errorResponse) return auth.errorResponse;
   const body = await req.json().catch(() => null);
   if (!body || typeof body.address !== "string")

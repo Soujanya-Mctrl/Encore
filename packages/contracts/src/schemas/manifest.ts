@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ORIGIN_CATEGORIES, EVIDENCE_STATUSES, RIGHTS_STATUSES } from "../enums/provenance.js";
+import { ProvenanceResultSchema } from "../provenance.js";
 
 export const ContributionSchema = z.object({
   role: z.string().min(1),
@@ -16,7 +17,9 @@ export const MusicPassportManifestSchema = z.object({
   originCategory: z.enum(ORIGIN_CATEGORIES),
   evidenceStatus: z.enum(EVIDENCE_STATUSES),
   rightsStatus: z.enum(RIGHTS_STATUSES),
-  contributions: z.array(ContributionSchema).min(1)
+  contributions: z.array(ContributionSchema).min(1),
+  metadataSignal: z.literal("ai_metadata_signal").optional(),
+  provenance: ProvenanceResultSchema.optional()
 });
 
 export type MusicPassportManifest = z.infer<typeof MusicPassportManifestSchema>;

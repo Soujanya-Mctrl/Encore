@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { catalog } from "@/server/catalog";
 import { getAuthenticatedUser } from "@/server/request-context";
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const { repo, storage } = catalog();
     const r = await repo.get(id);
-    const u = await getAuthenticatedUser();
+    const u = await getAuthenticatedUser(req);
     if (
       !r ||
       r.paused ||
