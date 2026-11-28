@@ -14,12 +14,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid campaign pledge payload" }, { status: 400 });
   }
 
-  const { marketplace, clock } = getServerContainer();
-  const result = await pledgeToCampaign(marketplace, clock, {
+  const { users, marketplace, chain, clock } = getServerContainer();
+  const wallets = await users.listWalletsForUser(auth.user.id);
+  const primaryWallet = wallets.find((w) => w.isPrimary) ?? wallets[0];
+  if (!primaryWallet) {
+    return NextResponse.json(
+      { error: "Connect or provision a Solana wallet before pledging" },
+      { status: 400 }
+    );
+  }
+
+  const result = await pledgeToCampaign(marketplace, chain, clock, {
     campaignId: parsed.data.campaignId,
     userId: auth.user.id,
+    payerWallet: primaryWallet.address,
     amountSmallestUnits: parsed.data.amountSmallestUnits
   });
   if (!result.ok) return NextResponse.json({ error: result.error.message }, { status: 409 });
-  return NextResponse.json({ campaign: result.value, demoOnly: true });
+  return NextResponse.json({ ...result.value, demoOnly: true });
 }

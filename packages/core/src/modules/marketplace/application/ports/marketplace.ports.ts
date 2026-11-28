@@ -52,6 +52,49 @@ export interface MarketplaceChainPort {
     manifestHash: string;
     amountSmallestUnits: string;
   }): Promise<UnsignedChainTransaction>;
+
+  buildCampaignPledgeTx(params: {
+    payerWallet: string;
+    vaultAddress: string;
+    campaignId: string;
+    amountSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildCampaignRefundTx(params: {
+    claimerWallet: string;
+    vaultAddress: string;
+    campaignId: string;
+    amountSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildSpotBuyTx(params: {
+    buyerWallet: string;
+    sellerWallet: string;
+    spotListingId: string;
+    campaignId: string;
+    units: number;
+    unitPriceSmallestUnits: string;
+    totalSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildDistributionClaimTx(params: {
+    claimerWallet: string;
+    vaultAddress: string;
+    cycleId: string;
+    campaignId: string;
+    payoutSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  verifyFinalizedDeposit(params: {
+    signature: string;
+    expectedDestination: string;
+    minimumAmountSmallestUnits: string;
+  }): Promise<{
+    verified: boolean;
+    slot: number;
+    actualAmountSmallestUnits: string;
+    reason?: string;
+  }>;
 }
 
 export interface MarketplaceRepositoryPort {
@@ -89,6 +132,13 @@ export interface MarketplaceRepositoryPort {
   getDistributionApproval(cycleId: string): Promise<DistributionApprovalEntity | null>;
   saveDistributionApproval(approval: DistributionApprovalEntity): Promise<DistributionApprovalEntity>;
   getHolderShareUnits(campaignId: string, userId: string): Promise<number>;
+  getHolderShareUnitsAtRecordDate(
+    cycleId: string,
+    campaignId: string,
+    userId: string,
+    recordDate: Date
+  ): Promise<number>;
+  snapshotCycleHolders(cycleId: string, campaignId: string, recordDate: Date): Promise<void>;
   markDistributionClaimed(cycleId: string, userId: string, amount: string): Promise<boolean>;
   recordCampaignReview(review: CampaignReviewEntity): Promise<CampaignReviewEntity>;
   getMilestoneById(milestoneId: string): Promise<CampaignMilestoneEntity | null>;

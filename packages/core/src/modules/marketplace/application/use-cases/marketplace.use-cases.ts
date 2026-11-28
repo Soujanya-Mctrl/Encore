@@ -303,24 +303,61 @@ export async function redeemSupporterPass(
 
 export async function pledgeToCampaign(
   repo: MarketplaceRepositoryPort,
+  chain: MarketplaceChainPort,
   clock: ClockPort,
-  params: { campaignId: string; userId: string; amountSmallestUnits: string }
-): Promise<Result<CampaignEntity, Error>> {
+  params: {
+    campaignId: string;
+    userId: string;
+    payerWallet: string;
+    amountSmallestUnits: string;
+  }
+): Promise<
+  Result<
+    {
+      campaign: CampaignEntity;
+      amountSmallestUnits: string;
+      unsignedTx: UnsignedChainTransaction;
+      settlementStatus: "pending_signature";
+    },
+    Error
+  >
+> {
   const campaign = await repo.getCampaignById(params.campaignId);
   if (!campaign) return err(new Error("Campaign not found"));
   if (campaign.status !== "FUNDING") return err(new Error("Campaign is no longer accepting pledges"));
   if (campaign.deadline.getTime() <= clock.now().getTime()) {
     return err(new Error("Campaign deadline has passed"));
   }
-  const updated = await repo.recordCampaignPledge(params);
-  return ok(updated);
+  const unsignedTx = await chain.buildCampaignPledgeTx({
+    payerWallet: params.payerWallet,
+    vaultAddress: campaign.vaultAddress,
+    campaignId: campaign.id,
+    amountSmallestUnits: params.amountSmallestUnits
+  });
+  return ok({
+    campaign,
+    amountSmallestUnits: params.amountSmallestUnits,
+    unsignedTx,
+    settlementStatus: "pending_signature"
+  });
 }
 
 export async function refundFailedCampaign(
   repo: MarketplaceRepositoryPort,
+  chain: MarketplaceChainPort,
   clock: ClockPort,
-  params: { campaignId: string; userId: string }
-): Promise<Result<{ refundedAmountSmallestUnits: string }, Error>> {
+  params: { campaignId: string; userId: string; claimerWallet: string }
+): Promise<
+  Result<
+    {
+      campaign: CampaignEntity;
+      refundedAmountSmallestUnits: string;
+      unsignedTx: UnsignedChainTransaction;
+      settlementStatus: "pending_signature";
+    },
+    Error
+  >
+> {
   const campaign = await repo.getCampaignById(params.campaignId);
   if (!campaign) return err(new Error("Campaign not found"));
   const pastDeadlineUnfunded =
@@ -332,15 +369,41 @@ export async function refundFailedCampaign(
   const amount = await repo.getCampaignPledgeAmount(params.campaignId, params.userId);
   if (BigInt(amount) <= 0n) return err(new Error("No refundable pledge found"));
 
-  const marked = await repo.markCampaignRefundClaimed(params.campaignId, params.userId);
-  if (!marked) return err(new Error("Refund already claimed"));
-  return ok({ refundedAmountSmallestUnits: amount });
+  const unsignedTx = await chain.buildCampaignRefundTx({
+    claimerWallet: params.claimerWallet,
+    vaultAddress: campaign.vaultAddress,
+    campaignId: campaign.id,
+    amountSmallestUnits: amount
+  });
+  return ok({
+    campaign,
+    refundedAmountSmallestUnits: amount,
+    unsignedTx,
+    settlementStatus: "pending_signature"
+  });
 }
 
 export async function buySpotShareUnits(
   repo: MarketplaceRepositoryPort,
-  params: { spotListingId: string; buyerUserId: string; units: number }
-): Promise<Result<SpotListingEntity, Error>> {
+  chain: MarketplaceChainPort,
+  params: {
+    spotListingId: string;
+    buyerUserId: string;
+    buyerWallet: string;
+    units: number;
+  }
+): Promise<
+  Result<
+    {
+      spotListing: SpotListingEntity;
+      units: number;
+      totalSmallestUnits: string;
+      unsignedTx: UnsignedChainTransaction;
+      settlementStatus: "pending_signature";
+    },
+    Error
+  >
+> {
   const listing = await repo.getSpotListingById(params.spotListingId);
   if (!listing || !listing.active) return err(new Error("Spot listing not active"));
   if (listing.sellerUserId === params.buyerUserId) {
@@ -349,19 +412,62 @@ export async function buySpotShareUnits(
   if (params.units <= 0 || params.units > listing.remainingUnits) {
     return err(new Error("Requested units exceed available ask size"));
   }
-  const updated = await repo.fillSpotListing(params);
-  return ok(updated);
+  const totalSmallestUnits = (
+    BigInt(listing.unitPriceSmallestUnits) * BigInt(params.units)
+  ).toString();
+  const unsignedTx = await chain.buildSpotBuyTx({
+    buyerWallet: params.buyerWallet,
+    sellerWallet: listing.sellerWallet,
+    spotListingId: listing.id,
+    campaignId: listing.campaignId,
+    units: params.units,
+    unitPriceSmallestUnits: listing.unitPriceSmallestUnits,
+    totalSmallestUnits
+  });
+  return ok({
+    spotListing: listing,
+    units: params.units,
+    totalSmallestUnits,
+    unsignedTx,
+    settlementStatus: "pending_signature"
+  });
 }
 
 export async function claimDistributionPayout(
   repo: MarketplaceRepositoryPort,
-  params: { cycleId: string; userId: string }
-): Promise<Result<{ cycle: DistributionCycleEntity; payoutSmallestUnits: string }, Error>> {
+  chain: MarketplaceChainPort,
+  params: { cycleId: string; userId: string; claimerWallet: string }
+): Promise<
+  Result<
+    {
+      cycle: DistributionCycleEntity;
+      payoutSmallestUnits: string;
+      unsignedTx: UnsignedChainTransaction;
+      settlementStatus: "pending_signature";
+    },
+    Error
+  >
+> {
   const cycle = await repo.getDistributionCycleById(params.cycleId);
   if (!cycle) return err(new Error("Distribution cycle not found"));
 
-  const holderUnits = await repo.getHolderShareUnits(cycle.campaignId, params.userId);
-  if (holderUnits <= 0) return err(new Error("No eligible project share units held at record date"));
+  const approval = await repo.getDistributionApproval(cycle.id);
+  if (!approval || approval.status !== "FUNDED_AND_OPEN") {
+    return err(new Error("Distribution cycle is not funded and open for claims"));
+  }
+
+  const campaign = await repo.getCampaignById(cycle.campaignId);
+  if (!campaign) return err(new Error("Campaign not found for distribution cycle"));
+
+  const holderUnits = await repo.getHolderShareUnitsAtRecordDate(
+    cycle.id,
+    cycle.campaignId,
+    params.userId,
+    cycle.recordDate
+  );
+  if (holderUnits <= 0) {
+    return err(new Error("No eligible project share units held at record date"));
+  }
 
   const payout = computeProRataDistributionClaim({
     verifiedRevenue: BigInt(cycle.verifiedRevenueSmallestUnits),
@@ -371,10 +477,20 @@ export async function claimDistributionPayout(
   });
   if (payout <= 0n) return err(new Error("No remaining claimable payout in cycle"));
 
-  const claimed = await repo.markDistributionClaimed(cycle.id, params.userId, payout.toString());
-  if (!claimed) return err(new Error("Distribution payout already claimed for this cycle"));
+  const unsignedTx = await chain.buildDistributionClaimTx({
+    claimerWallet: params.claimerWallet,
+    vaultAddress: campaign.vaultAddress,
+    cycleId: cycle.id,
+    campaignId: cycle.campaignId,
+    payoutSmallestUnits: payout.toString()
+  });
 
-  return ok({ cycle, payoutSmallestUnits: payout.toString() });
+  return ok({
+    cycle,
+    payoutSmallestUnits: payout.toString(),
+    unsignedTx,
+    settlementStatus: "pending_signature"
+  });
 }
 
 export async function tradeOpinionMarketPair(
@@ -440,25 +556,28 @@ export async function cancelSpotListing(
 
 export async function refundCampaign(
   repo: MarketplaceRepositoryPort,
+  chain: MarketplaceChainPort,
   clock: ClockPort,
-  params: { campaignId: string; userId: string }
-): Promise<Result<{ campaign: CampaignEntity; refundSmallestUnits: string }, Error>> {
-  const campaign = await repo.getCampaignById(params.campaignId);
-  if (!campaign) return err(new Error("Campaign not found"));
-  const deadlinePassed = clock.now().getTime() > campaign.deadline.getTime();
-  const goalMissed = BigInt(campaign.raisedSmallestUnits) < BigInt(campaign.goalSmallestUnits);
-  if (campaign.status !== "FAILED" && !(deadlinePassed && goalMissed)) {
-    return err(new Error("Campaign is not eligible for refund"));
-  }
-  const pledged = await repo.getCampaignPledgeAmount(campaign.id, params.userId);
-  if (BigInt(pledged) <= 0n) {
-    return err(new Error("No refundable pledge found for user"));
-  }
-  const claimed = await repo.markCampaignRefundClaimed(campaign.id, params.userId);
-  if (!claimed) {
-    return err(new Error("Campaign refund already claimed"));
-  }
-  return ok({ campaign, refundSmallestUnits: pledged });
+  params: { campaignId: string; userId: string; claimerWallet: string }
+): Promise<
+  Result<
+    {
+      campaign: CampaignEntity;
+      refundSmallestUnits: string;
+      unsignedTx: UnsignedChainTransaction;
+      settlementStatus: "pending_signature";
+    },
+    Error
+  >
+> {
+  const res = await refundFailedCampaign(repo, chain, clock, params);
+  if (!res.ok) return res;
+  return ok({
+    campaign: res.value.campaign,
+    refundSmallestUnits: res.value.refundedAmountSmallestUnits,
+    unsignedTx: res.value.unsignedTx,
+    settlementStatus: res.value.settlementStatus
+  });
 }
 
 export async function reviewCampaign(
@@ -566,6 +685,7 @@ export async function reconcileDistributionCycle(
 
 export async function approveAndFundDistributionCycle(
   repo: MarketplaceRepositoryPort,
+  chain: MarketplaceChainPort,
   clock: ClockPort,
   params: {
     cycleId: string;
@@ -573,6 +693,11 @@ export async function approveAndFundDistributionCycle(
     fundedTxSig: string;
   }
 ): Promise<Result<DistributionApprovalEntity, Error>> {
+  const cycle = await repo.getDistributionCycleById(params.cycleId);
+  if (!cycle) return err(new Error("Distribution cycle not found"));
+  const campaign = await repo.getCampaignById(cycle.campaignId);
+  if (!campaign) return err(new Error("Campaign not found for distribution cycle"));
+
   const approval = await repo.getDistributionApproval(params.cycleId);
   if (!approval) return err(new Error("Distribution cycle has not been reconciled yet"));
   if (approval.operatorUserId === params.approverUserId) {
@@ -581,6 +706,23 @@ export async function approveAndFundDistributionCycle(
   if (approval.status === "FUNDED_AND_OPEN") {
     return err(new Error("Distribution cycle is already funded and open"));
   }
+
+  const verification = await chain.verifyFinalizedDeposit({
+    signature: params.fundedTxSig,
+    expectedDestination: campaign.vaultAddress,
+    minimumAmountSmallestUnits: cycle.verifiedRevenueSmallestUnits
+  });
+  if (!verification.verified) {
+    return err(
+      new Error(
+        verification.reason ??
+        "On-chain deposit could not be verified as finalized for the cycle vault"
+      )
+    );
+  }
+
+  await repo.snapshotCycleHolders(cycle.id, cycle.campaignId, cycle.recordDate);
+
   const updated = await repo.saveDistributionApproval({
     ...approval,
     approverUserId: params.approverUserId,

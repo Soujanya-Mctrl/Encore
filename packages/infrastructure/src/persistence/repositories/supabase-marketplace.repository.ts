@@ -401,6 +401,70 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
     return (data ?? []).reduce((sum: number, row: any) => sum + Number(row.units ?? 0), 0);
   }
 
+  async getHolderShareUnitsAtRecordDate(
+    cycleId: string,
+    campaignId: string,
+    userId: string,
+    recordDate: Date
+  ): Promise<number> {
+    const { data: frozen } = await this.client
+      .from("distribution_record_snapshots")
+      .select("units")
+      .eq("cycle_id", cycleId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (frozen) {
+      return Number(frozen.units ?? 0);
+    }
+
+    const { data: fills } = await this.client
+      .from("spot_fills")
+      .select("buyer_user_id, seller_user_id, units")
+      .eq("campaign_id", campaignId)
+      .lte("filled_at", recordDate.toISOString());
+
+    return (fills ?? []).reduce((acc: number, row: any) => {
+      const units = Number(row.units ?? 0);
+      if (row.buyer_user_id === userId) return acc + units;
+      if (row.seller_user_id === userId) return Math.max(0, acc - units);
+      return acc;
+    }, 0);
+  }
+
+  async snapshotCycleHolders(
+    cycleId: string,
+    campaignId: string,
+    recordDate: Date
+  ): Promise<void> {
+    const { data: fills } = await this.client
+      .from("spot_fills")
+      .select("buyer_user_id, seller_user_id, units")
+      .eq("campaign_id", campaignId)
+      .lte("filled_at", recordDate.toISOString());
+
+    const balances = new Map<string, number>();
+    for (const row of fills ?? []) {
+      const units = Number((row as any).units ?? 0);
+      const buyer = String((row as any).buyer_user_id);
+      const seller = String((row as any).seller_user_id);
+      balances.set(buyer, (balances.get(buyer) ?? 0) + units);
+      if (balances.has(seller)) {
+        balances.set(seller, Math.max(0, (balances.get(seller) ?? 0) - units));
+      }
+    }
+
+    const rows = Array.from(balances.entries())
+      .filter(([, units]) => units > 0)
+      .map(([userId, units]) => ({
+        cycle_id: cycleId,
+        user_id: userId,
+        units
+      }));
+    if (rows.length > 0) {
+      await this.client.from("distribution_record_snapshots").upsert(rows);
+    }
+  }
+
   async markDistributionClaimed(cycleId: string, userId: string, amount: string): Promise<boolean> {
     const { error } = await this.client.from("distribution_claims").insert({
       cycle_id: cycleId,

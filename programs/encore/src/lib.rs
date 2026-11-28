@@ -238,6 +238,174 @@ pub mod encore {
         pass.listing_expiry = 0;
         Ok(())
     }
+
+    pub fn list_pass(
+        ctx: Context<ListPass>,
+        listing_price: u64,
+        listing_expiry: i64,
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let pass = &mut ctx.accounts.pass;
+        require!(
+            pass.owner == ctx.accounts.owner.key(),
+            EncoreError::Unauthorized
+        );
+        require!(pass.status == PassStatus::Owned, EncoreError::TerminalPassState);
+        require!(listing_price > 0, EncoreError::MathOverflow);
+        require!(
+            listing_expiry > now && listing_expiry <= ctx.accounts.series.expiry,
+            EncoreError::TerminalPassState
+        );
+        pass.status = PassStatus::Listed;
+        pass.listing_price = listing_price;
+        pass.listing_expiry = listing_expiry;
+        Ok(())
+    }
+
+    pub fn cancel_pass_listing(ctx: Context<CancelPassListing>) -> Result<()> {
+        let pass = &mut ctx.accounts.pass;
+        require!(
+            pass.owner == ctx.accounts.owner.key(),
+            EncoreError::Unauthorized
+        );
+        require!(pass.status == PassStatus::Listed, EncoreError::TerminalPassState);
+        pass.status = PassStatus::Owned;
+        pass.nonce = pass.nonce.checked_add(1).ok_or(EncoreError::MathOverflow)?;
+        pass.listing_price = 0;
+        pass.listing_expiry = 0;
+        Ok(())
+    }
+
+    pub fn buy_listing(
+        ctx: Context<BuyListing>,
+        expected_nonce: u64,
+        expected_version: u32,
+        expected_manifest_hash: [u8; 32],
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let series = &ctx.accounts.series;
+        let pass = &mut ctx.accounts.pass;
+        require!(
+            series.status == SeriesStatus::Active,
+            EncoreError::TrackPaused
+        );
+        assert_passport_eligible(
+            &ctx.accounts.track,
+            expected_version,
+            expected_manifest_hash,
+        )?;
+        require!(pass.status == PassStatus::Listed, EncoreError::TerminalPassState);
+        require!(pass.nonce == expected_nonce, EncoreError::Unauthorized);
+        require!(
+            now < pass.listing_expiry && now < series.expiry,
+            EncoreError::TerminalPassState
+        );
+        require!(
+            ctx.accounts.buyer.key() != pass.owner,
+            EncoreError::Unauthorized
+        );
+
+        let price = pass.listing_price;
+        let artist_fee = compute_bps_fee(price, series.resale_artist_bps as u64)?;
+        let platform_fee = compute_bps_fee(price, series.resale_fee_bps as u64)?;
+        let seller_payout = price
+            .checked_sub(artist_fee)
+            .and_then(|v| v.checked_sub(platform_fee))
+            .ok_or(EncoreError::MathOverflow)?;
+
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.buyer_ata.to_account_info(),
+                    to: ctx.accounts.seller_ata.to_account_info(),
+                    authority: ctx.accounts.buyer.to_account_info(),
+                },
+            ),
+            seller_payout,
+        )?;
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.buyer_ata.to_account_info(),
+                    to: ctx.accounts.artist_ata.to_account_info(),
+                    authority: ctx.accounts.buyer.to_account_info(),
+                },
+            ),
+            artist_fee,
+        )?;
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.buyer_ata.to_account_info(),
+                    to: ctx.accounts.platform_ata.to_account_info(),
+                    authority: ctx.accounts.buyer.to_account_info(),
+                },
+            ),
+            platform_fee,
+        )?;
+
+        pass.owner = ctx.accounts.buyer.key();
+        pass.status = PassStatus::Owned;
+        pass.nonce = pass.nonce.checked_add(1).ok_or(EncoreError::MathOverflow)?;
+        pass.listing_price = 0;
+        pass.listing_expiry = 0;
+        Ok(())
+    }
+
+    pub fn pledge_campaign(ctx: Context<PledgeCampaign>, amount: u64) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let campaign = &mut ctx.accounts.campaign;
+        require!(
+            campaign.status == CampaignStatus::Funding,
+            EncoreError::TrackPaused
+        );
+        require!(now < campaign.deadline, EncoreError::TerminalPassState);
+        require!(amount > 0, EncoreError::MathOverflow);
+
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.payer_ata.to_account_info(),
+                    to: ctx.accounts.vault_ata.to_account_info(),
+                    authority: ctx.accounts.payer.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
+
+        campaign.raised = campaign
+            .raised
+            .checked_add(amount)
+            .ok_or(EncoreError::MathOverflow)?;
+        if campaign.raised >= campaign.goal {
+            campaign.status = CampaignStatus::Funded;
+        }
+        Ok(())
+    }
+
+    pub fn buy_spot(ctx: Context<BuySpot>, total_amount: u64) -> Result<()> {
+        require!(total_amount > 0, EncoreError::MathOverflow);
+        require!(
+            ctx.accounts.buyer.key() != ctx.accounts.seller.key(),
+            EncoreError::Unauthorized
+        );
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.buyer_ata.to_account_info(),
+                    to: ctx.accounts.seller_ata.to_account_info(),
+                    authority: ctx.accounts.buyer.to_account_info(),
+                },
+            ),
+            total_amount,
+        )?;
+        Ok(())
+    }
 }
 #[derive(Accounts)]
 pub struct RegisterArtist<'info> {
@@ -343,4 +511,67 @@ pub struct RedeemPass<'info> {
     pub series: Account<'info, PassSeries>,
     #[account(mut, constraint = pass.series == series.key() @ EncoreError::Unauthorized)]
     pub pass: Account<'info, SupporterPass>,
+}
+
+#[derive(Accounts)]
+pub struct ListPass<'info> {
+    pub owner: Signer<'info>,
+    pub series: Account<'info, PassSeries>,
+    #[account(mut, constraint = pass.series == series.key() @ EncoreError::Unauthorized)]
+    pub pass: Account<'info, SupporterPass>,
+}
+
+#[derive(Accounts)]
+pub struct CancelPassListing<'info> {
+    pub owner: Signer<'info>,
+    pub series: Account<'info, PassSeries>,
+    #[account(mut, constraint = pass.series == series.key() @ EncoreError::Unauthorized)]
+    pub pass: Account<'info, SupporterPass>,
+}
+
+#[derive(Accounts)]
+pub struct BuyListing<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+    pub artist: Account<'info, Artist>,
+    pub track: Account<'info, Track>,
+    #[account(constraint = series.track == track.key() && series.artist == artist.key() @ EncoreError::Unauthorized)]
+    pub series: Account<'info, PassSeries>,
+    #[account(mut, constraint = pass.series == series.key() @ EncoreError::Unauthorized)]
+    pub pass: Account<'info, SupporterPass>,
+    #[account(mut, constraint = buyer_ata.owner == buyer.key() && buyer_ata.mint == series.mint @ EncoreError::Unauthorized)]
+    pub buyer_ata: Account<'info, TokenAccount>,
+    #[account(mut, constraint = seller_ata.owner == pass.owner && seller_ata.mint == series.mint @ EncoreError::Unauthorized)]
+    pub seller_ata: Account<'info, TokenAccount>,
+    #[account(mut, constraint = artist_ata.owner == artist.authority && artist_ata.mint == series.mint @ EncoreError::Unauthorized)]
+    pub artist_ata: Account<'info, TokenAccount>,
+    #[account(mut, constraint = platform_ata.owner == series.platform_wallet && platform_ata.mint == series.mint @ EncoreError::Unauthorized)]
+    pub platform_ata: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct PledgeCampaign<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut)]
+    pub campaign: Account<'info, Campaign>,
+    #[account(mut, constraint = payer_ata.owner == payer.key() && payer_ata.mint == campaign.mint @ EncoreError::Unauthorized)]
+    pub payer_ata: Account<'info, TokenAccount>,
+    #[account(mut, constraint = vault_ata.key() == campaign.vault && vault_ata.mint == campaign.mint @ EncoreError::Unauthorized)]
+    pub vault_ata: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct BuySpot<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+    /// CHECK: Seller wallet verified against listing
+    pub seller: UncheckedAccount<'info>,
+    #[account(mut, constraint = buyer_ata.owner == buyer.key() @ EncoreError::Unauthorized)]
+    pub buyer_ata: Account<'info, TokenAccount>,
+    #[account(mut, constraint = seller_ata.owner == seller.key() && seller_ata.mint == buyer_ata.mint @ EncoreError::Unauthorized)]
+    pub seller_ata: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
 }

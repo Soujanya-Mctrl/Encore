@@ -64,6 +64,7 @@ describe("Marketplace Security & Adversarial Suite", () => {
 
   it("blocks duplicate redemption and unauthorized distribution claims", async () => {
     const repo = new InMemoryMarketplaceRepository();
+    const chain = new SolanaMarketplaceChainAdapter();
     const clock = { now: () => new Date() };
 
     const firstRedeem = await redeemSupporterPass(repo, clock, {
@@ -78,10 +79,11 @@ describe("Marketplace Security & Adversarial Suite", () => {
     });
     expect(secondRedeem.ok).toBe(false);
 
-    // User with 0 share units cannot claim distribution payout
-    const badClaim = await claimDistributionPayout(repo, {
+    // User with 0 share units (and unfunded cycle) cannot claim distribution payout
+    const badClaim = await claimDistributionPayout(repo, chain, {
       cycleId: "cycle-q4-sim",
-      userId: "non-holder-user"
+      userId: "non-holder-user",
+      claimerWallet: "11111111111111111111111111111111"
     });
     expect(badClaim.ok).toBe(false);
   });

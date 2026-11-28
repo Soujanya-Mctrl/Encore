@@ -17,8 +17,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid fund distribution payload" }, { status: 400 });
   }
 
-  const { marketplace, clock } = getServerContainer();
-  const result = await approveAndFundDistributionCycle(marketplace, clock, {
+  const { marketplace, chain, clock } = getServerContainer();
+  const result = await approveAndFundDistributionCycle(marketplace, chain, clock, {
     cycleId: parsed.data.cycleId,
     approverUserId: auth.user.id,
     fundedTxSig: parsed.data.fundedTxSig
