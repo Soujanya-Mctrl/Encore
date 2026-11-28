@@ -73,6 +73,14 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   private readonly campaignReviews: CampaignReviewEntity[] = [];
   private readonly milestones = new Map<string, CampaignMilestoneEntity>();
   private readonly markets = new Map<string, OpinionMarketEntity>();
+  private readonly chainEvents: Array<{
+    signature: string;
+    eventIndex: number;
+    slot: number;
+    eventType: string;
+    payload: Record<string, unknown>;
+    finality: "confirmed" | "finalized";
+  }> = [];
 
   constructor() {
     for (const t of SEED_TRACKS) this.tracks.set(t.trackId, t);
@@ -129,6 +137,7 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
       sellerWallet: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
       remainingUnits: 20,
       unitPriceSmallestUnits: "1280000", // 1.28 test USDC / unit
+      nonce: 0,
       active: true
     });
 
@@ -260,6 +269,7 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
     const updated: SpotListingEntity = {
       ...l,
       remainingUnits: remaining,
+      nonce: (l.nonce ?? 0) + 1,
       active: remaining > 0
     };
     this.spotListings.set(l.id, updated);
@@ -373,5 +383,56 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
     };
     this.markets.set(m.id, updated);
     return updated;
+  }
+
+  async saveCampaign(campaign: CampaignEntity): Promise<CampaignEntity> {
+    this.campaigns.set(campaign.id, campaign);
+    return campaign;
+  }
+
+  async recordChainEvent(params: {
+    signature: string;
+    eventIndex: number;
+    slot: number;
+    eventType: string;
+    payload: Record<string, unknown>;
+    finality: "confirmed" | "finalized";
+  }): Promise<void> {
+    const exists = this.chainEvents.some(
+      (e) => e.signature === params.signature && e.eventIndex === params.eventIndex
+    );
+    if (!exists) this.chainEvents.push(params);
+  }
+
+  async getPortfolioForUser(userId: string) {
+    return {
+      passes: await this.listPassesByOwner(userId),
+      receipts: await this.listReceiptsForUser(userId),
+      spotListings: Array.from(this.spotListings.values()).filter(
+        (l) => l.sellerUserId === userId
+      )
+    };
+  }
+
+  async listDistributionEntitlements(cycleId: string) {
+    const cycle = this.cycles.get(cycleId);
+    if (!cycle) return [];
+    let snapshot = this.cycleSnapshots.get(cycleId);
+    if (!snapshot) {
+      await this.snapshotCycleHolders(cycleId, cycle.campaignId, cycle.recordDate);
+      snapshot = this.cycleSnapshots.get(cycleId);
+    }
+    const entries = snapshot ? Array.from(snapshot.entries()) : [];
+    const walletByUser = new Map<string, string>();
+    for (const r of this.receipts.values()) walletByUser.set(r.payerUserId, r.payerWallet);
+    for (const p of this.passes.values()) walletByUser.set(p.ownerUserId, p.ownerWallet);
+    for (const l of this.spotListings.values()) walletByUser.set(l.sellerUserId, l.sellerWallet);
+    return entries
+      .filter(([, units]) => units > 0)
+      .map(([userId, units]) => ({
+        userId,
+        walletAddress: walletByUser.get(userId) ?? "11111111111111111111111111111111",
+        units
+      }));
   }
 }

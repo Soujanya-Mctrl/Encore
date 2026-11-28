@@ -405,6 +405,1157 @@
           "type": "bool"
         }
       ]
+    },
+    {
+      "name": "direct_support",
+      "discriminator": [
+        174,
+        85,
+        147,
+        254,
+        46,
+        14,
+        105,
+        176
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist",
+          "relations": [
+            "track"
+          ]
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "payer_ata",
+          "writable": true
+        },
+        {
+          "name": "artist_ata",
+          "writable": true
+        },
+        {
+          "name": "support_receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "expected_version",
+          "type": "u32"
+        },
+        {
+          "name": "expected_manifest_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_series",
+      "discriminator": [
+        181,
+        9,
+        52,
+        120,
+        197,
+        221,
+        42,
+        142
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist"
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "platform_wallet"
+        },
+        {
+          "name": "series",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  114,
+                  105,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "artist"
+              },
+              {
+                "kind": "arg",
+                "path": "series_id_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_series_id_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "terms_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "benefit_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "cap",
+          "type": "u32"
+        },
+        {
+          "name": "primary_price",
+          "type": "u64"
+        },
+        {
+          "name": "expiry",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "buy_primary",
+      "discriminator": [
+        89,
+        86,
+        227,
+        49,
+        41,
+        118,
+        66,
+        248
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist"
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "series",
+          "writable": true
+        },
+        {
+          "name": "pass",
+          "writable": true
+        },
+        {
+          "name": "buyer_ata",
+          "writable": true
+        },
+        {
+          "name": "artist_ata",
+          "writable": true
+        },
+        {
+          "name": "platform_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "expected_version",
+          "type": "u32"
+        },
+        {
+          "name": "expected_manifest_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "list_pass",
+      "discriminator": [
+        233,
+        91,
+        184,
+        83,
+        64,
+        76,
+        64,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "series"
+        },
+        {
+          "name": "pass",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "listing_price",
+          "type": "u64"
+        },
+        {
+          "name": "listing_expiry",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_pass_listing",
+      "discriminator": [
+        150,
+        233,
+        109,
+        101,
+        22,
+        79,
+        248,
+        45
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "series"
+        },
+        {
+          "name": "pass",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "buy_listing",
+      "discriminator": [
+        115,
+        149,
+        42,
+        108,
+        44,
+        49,
+        140,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist"
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "series"
+        },
+        {
+          "name": "pass",
+          "writable": true
+        },
+        {
+          "name": "buyer_ata",
+          "writable": true
+        },
+        {
+          "name": "seller_ata",
+          "writable": true
+        },
+        {
+          "name": "artist_ata",
+          "writable": true
+        },
+        {
+          "name": "platform_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "expected_nonce",
+          "type": "u64"
+        },
+        {
+          "name": "expected_version",
+          "type": "u32"
+        },
+        {
+          "name": "expected_manifest_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "redeem_pass",
+      "discriminator": [
+        162,
+        9,
+        91,
+        204,
+        143,
+        221,
+        19,
+        207
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "series"
+        },
+        {
+          "name": "pass",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "expire_pass",
+      "discriminator": [
+        24,
+        235,
+        1,
+        62,
+        38,
+        186,
+        81,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "series"
+        },
+        {
+          "name": "pass",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_campaign",
+      "discriminator": [
+        111,
+        131,
+        187,
+        98,
+        160,
+        193,
+        114,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "artist"
+        },
+        {
+          "name": "track"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "artist"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "terms_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "goal",
+          "type": "u64"
+        },
+        {
+          "name": "share_supply",
+          "type": "u64"
+        },
+        {
+          "name": "deadline",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "pledge_campaign",
+      "discriminator": [
+        225,
+        108,
+        0,
+        14,
+        21,
+        140,
+        100,
+        67
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true
+        },
+        {
+          "name": "pledge",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer_ata",
+          "writable": true
+        },
+        {
+          "name": "vault_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "release_milestone",
+      "discriminator": [
+        56,
+        2,
+        199,
+        164,
+        184,
+        108,
+        167,
+        222
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "artist",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "campaign",
+          "writable": true
+        },
+        {
+          "name": "vault_ata",
+          "writable": true
+        },
+        {
+          "name": "artist_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "milestone_index",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refund_campaign",
+      "discriminator": [
+        232,
+        19,
+        109,
+        7,
+        229,
+        33,
+        157,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "claimer",
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true
+        },
+        {
+          "name": "pledge",
+          "writable": true
+        },
+        {
+          "name": "vault_ata",
+          "writable": true
+        },
+        {
+          "name": "claimer_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_spot_listing",
+      "discriminator": [
+        18,
+        124,
+        244,
+        142,
+        111,
+        238,
+        101,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign"
+        },
+        {
+          "name": "spot_listing",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  111,
+                  116,
+                  95,
+                  108,
+                  105,
+                  115,
+                  116,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "seller"
+              },
+              {
+                "kind": "arg",
+                "path": "listing_id_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "listing_id_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "units",
+          "type": "u32"
+        },
+        {
+          "name": "unit_price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_spot_listing",
+      "discriminator": [
+        137,
+        148,
+        71,
+        215,
+        245,
+        227,
+        54,
+        192
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "signer": true
+        },
+        {
+          "name": "spot_listing",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "buy_spot",
+      "discriminator": [
+        240,
+        152,
+        121,
+        253,
+        95,
+        251,
+        53,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "spot_listing",
+          "writable": true
+        },
+        {
+          "name": "buyer_ata",
+          "writable": true
+        },
+        {
+          "name": "seller_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "units",
+          "type": "u32"
+        },
+        {
+          "name": "expected_nonce",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "open_distribution_cycle",
+      "discriminator": [
+        209,
+        242,
+        102,
+        221,
+        7,
+        94,
+        131,
+        184
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "funder_ata",
+          "writable": true
+        },
+        {
+          "name": "cycle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  99,
+                  121,
+                  99,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "arg",
+                "path": "cycle_id_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "distribution_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "cycle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "cycle_id_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "evidence_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "merkle_root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "verified_revenue",
+          "type": "u64"
+        },
+        {
+          "name": "total_supply_snapshot",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claim_distribution",
+      "discriminator": [
+        204,
+        156,
+        94,
+        85,
+        2,
+        125,
+        232,
+        180
+      ],
+      "accounts": [
+        {
+          "name": "claimer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "cycle",
+          "writable": true
+        },
+        {
+          "name": "distribution_vault",
+          "writable": true
+        },
+        {
+          "name": "claimer_ata",
+          "writable": true
+        },
+        {
+          "name": "claim",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  105,
+                  109
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "cycle"
+              },
+              {
+                "kind": "account",
+                "path": "claimer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -422,6 +1573,71 @@
       ]
     },
     {
+      "name": "encore::state::Campaign",
+      "discriminator": [
+        50,
+        40,
+        49,
+        11,
+        157,
+        220,
+        229,
+        192
+      ]
+    },
+    {
+      "name": "encore::state::CampaignPledge",
+      "discriminator": [
+        195,
+        183,
+        177,
+        136,
+        207,
+        219,
+        197,
+        6
+      ]
+    },
+    {
+      "name": "encore::state::DistributionClaim",
+      "discriminator": [
+        239,
+        137,
+        48,
+        156,
+        94,
+        143,
+        205,
+        29
+      ]
+    },
+    {
+      "name": "encore::state::DistributionCycle",
+      "discriminator": [
+        157,
+        156,
+        197,
+        205,
+        125,
+        166,
+        171,
+        48
+      ]
+    },
+    {
+      "name": "encore::state::PassSeries",
+      "discriminator": [
+        30,
+        179,
+        224,
+        200,
+        164,
+        10,
+        245,
+        228
+      ]
+    },
+    {
       "name": "encore::state::PassportVersion",
       "discriminator": [
         108,
@@ -432,6 +1648,45 @@
         255,
         200,
         0
+      ]
+    },
+    {
+      "name": "encore::state::SpotListing",
+      "discriminator": [
+        117,
+        32,
+        185,
+        212,
+        59,
+        95,
+        61,
+        186
+      ]
+    },
+    {
+      "name": "encore::state::SupportReceipt",
+      "discriminator": [
+        166,
+        179,
+        206,
+        234,
+        180,
+        184,
+        129,
+        16
+      ]
+    },
+    {
+      "name": "encore::state::SupporterPass",
+      "discriminator": [
+        136,
+        101,
+        61,
+        180,
+        243,
+        60,
+        219,
+        125
       ]
     },
     {
@@ -475,6 +1730,333 @@
       }
     },
     {
+      "name": "encore::state::Campaign",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "artist",
+            "type": "pubkey"
+          },
+          {
+            "name": "track",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign_id_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "terms_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "goal",
+            "type": "u64"
+          },
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "released_amount",
+            "type": "u64"
+          },
+          {
+            "name": "share_supply",
+            "type": "u64"
+          },
+          {
+            "name": "deadline",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "encore::state::CampaignStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::CampaignPledge",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::CampaignStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Funding"
+          },
+          {
+            "name": "Funded"
+          },
+          {
+            "name": "Failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::DistributionClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "cycle",
+            "type": "pubkey"
+          },
+          {
+            "name": "claimer",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimed_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::DistributionCycle",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "cycle_id_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "evidence_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "merkle_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "verified_revenue",
+            "type": "u64"
+          },
+          {
+            "name": "claimed_amount",
+            "type": "u64"
+          },
+          {
+            "name": "total_supply_snapshot",
+            "type": "u64"
+          },
+          {
+            "name": "open",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::PassSeries",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "artist",
+            "type": "pubkey"
+          },
+          {
+            "name": "track",
+            "type": "pubkey"
+          },
+          {
+            "name": "terms_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "benefit_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "cap",
+            "type": "u32"
+          },
+          {
+            "name": "issued",
+            "type": "u32"
+          },
+          {
+            "name": "primary_price",
+            "type": "u64"
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "primary_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "resale_artist_bps",
+            "type": "u16"
+          },
+          {
+            "name": "resale_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "platform_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "encore::state::SeriesStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::PassStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Offered"
+          },
+          {
+            "name": "Owned"
+          },
+          {
+            "name": "Listed"
+          },
+          {
+            "name": "Redeemed"
+          },
+          {
+            "name": "Expired"
+          }
+        ]
+      }
+    },
+    {
       "name": "encore::state::PassportVersion",
       "type": {
         "kind": "struct",
@@ -507,6 +2089,161 @@
           },
           {
             "name": "recorded_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::SeriesStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::SpotListing",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "listing_id_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_units",
+            "type": "u32"
+          },
+          {
+            "name": "remaining_units",
+            "type": "u32"
+          },
+          {
+            "name": "unit_price",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::SupportReceipt",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "track",
+            "type": "pubkey"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "manifest_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "encore::state::SupporterPass",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "series",
+            "type": "pubkey"
+          },
+          {
+            "name": "serial",
+            "type": "u32"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "encore::state::PassStatus"
+              }
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "listing_price",
+            "type": "u64"
+          },
+          {
+            "name": "listing_expiry",
             "type": "i64"
           }
         ]
@@ -590,6 +2327,36 @@
       "code": 6006,
       "name": "InvalidAmount",
       "msg": "Invalid amount or zero price"
+    },
+    {
+      "code": 6007,
+      "name": "CampaignNotFunded",
+      "msg": "Campaign is not funded"
+    },
+    {
+      "code": 6008,
+      "name": "CampaignStillActive",
+      "msg": "Campaign deadline has not passed or goal was met"
+    },
+    {
+      "code": 6009,
+      "name": "RefundAlreadyClaimed",
+      "msg": "Campaign pledge refund already claimed"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidMerkleProof",
+      "msg": "Invalid distribution Merkle proof"
+    },
+    {
+      "code": 6011,
+      "name": "DistributionClosed",
+      "msg": "Distribution cycle is closed or exhausted"
+    },
+    {
+      "code": 6012,
+      "name": "SpotListingInactive",
+      "msg": "Spot listing is inactive or lacks requested units"
     }
   ]
 }

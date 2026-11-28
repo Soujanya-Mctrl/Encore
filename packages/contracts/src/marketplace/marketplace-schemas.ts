@@ -134,6 +134,66 @@ export const FundDistributionInputSchema = z.object({
   fundedTxSig: z.string().min(32).max(128)
 });
 
+export const ReleaseMilestoneInputSchema = z.object({
+  milestoneId: z.string().min(1)
+});
+
+export const OpenDistributionInputSchema = z.object({
+  cycleId: z.string().min(1)
+});
+
+export const ConfirmMarketplaceActionKindSchema = z.enum([
+  "direct_support",
+  "create_series",
+  "buy_primary",
+  "list_pass",
+  "cancel_pass_listing",
+  "buy_listing",
+  "redeem_pass",
+  "create_campaign",
+  "pledge_campaign",
+  "refund_campaign",
+  "create_spot_listing",
+  "cancel_spot_listing",
+  "buy_spot",
+  "claim_distribution"
+]);
+
+export const ConfirmMarketplaceTxInputSchema = z.object({
+  kind: ConfirmMarketplaceActionKindSchema,
+  signature: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,100}$/, "Invalid Solana signature").optional(),
+  signedTransaction: z.string().min(1).max(8000).optional(),
+  trackId: z.string().optional(),
+  seriesId: z.string().optional(),
+  passId: z.string().optional(),
+  campaignId: z.string().optional(),
+  spotListingId: z.string().optional(),
+  cycleId: z.string().optional(),
+  expectedVersion: z.number().int().positive().optional(),
+  expectedManifestHash: z.string().length(64).optional(),
+  amountSmallestUnits: PositiveAtomicAmountSchema.optional(),
+  nonce: z.string().optional(),
+  units: z.number().int().positive().optional(),
+  listingPriceSmallestUnits: PositiveAtomicAmountSchema.optional(),
+  listingExpiryIso: z.string().datetime().optional(),
+  title: z.string().optional(),
+  benefitSummary: z.string().optional(),
+  cap: z.number().int().positive().optional(),
+  primaryPriceSmallestUnits: PositiveAtomicAmountSchema.optional(),
+  expiryIso: z.string().datetime().optional(),
+  deliverableUrl: z.string().url().optional(),
+  goalSmallestUnits: PositiveAtomicAmountSchema.optional(),
+  shareSupply: z.number().int().positive().optional(),
+  deadlineIso: z.string().datetime().optional(),
+  useOfFunds: z.string().optional(),
+  rightsScope: z.string().optional(),
+  vaultAddress: SolanaAddressSchema.optional(),
+  unitPriceSmallestUnits: PositiveAtomicAmountSchema.optional(),
+  walletMode: z.enum(["external_anchor", "pollar_embedded_spl"]).optional()
+}).refine((v) => Boolean(v.signature || v.signedTransaction), {
+  message: "Provide either signature or signedTransaction"
+});
+
 export const TRANSACTION_LIFECYCLE_STATES = [
   "review",
   "wallet",
@@ -183,6 +243,10 @@ export type SubmitMilestoneInput = z.infer<typeof SubmitMilestoneInputSchema>;
 export type ApproveMilestoneInput = z.infer<typeof ApproveMilestoneInputSchema>;
 export type ReconcileDistributionInput = z.infer<typeof ReconcileDistributionInputSchema>;
 export type FundDistributionInput = z.infer<typeof FundDistributionInputSchema>;
+export type ReleaseMilestoneInput = z.infer<typeof ReleaseMilestoneInputSchema>;
+export type OpenDistributionInput = z.infer<typeof OpenDistributionInputSchema>;
+export type ConfirmMarketplaceActionKind = z.infer<typeof ConfirmMarketplaceActionKindSchema>;
+export type ConfirmMarketplaceTxInput = z.infer<typeof ConfirmMarketplaceTxInputSchema>;
 export type OpinionTradeInput = z.infer<typeof OpinionTradeInputSchema>;
 export type TrackPassportSummary = z.infer<typeof TrackPassportSummarySchema>;
 
