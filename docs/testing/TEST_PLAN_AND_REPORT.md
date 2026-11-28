@@ -51,3 +51,9 @@
 | Date (UTC) | Suite / Command | Environment | Pass / Fail | Tx Signatures / Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | `2026-11-26` | *Pre-implementation baseline* | `N/A` | `Not Run` | Awaiting `H02–10` Anchor & web scaffolding |
+| `2026-11-28` | `pnpm lint` (`scripts/check-boundaries.ts`) | `Windows / Node v22.21.1` | `PASS` | Domain and client/server import boundaries passed (`main` @ `f1aef71` + local fix). |
+| `2026-11-28` | `pnpm check:secrets` (`scripts/check-secrets.ts`) | `Windows / Node v22.21.1` | `PASS` | Passed for 0 staged files after guarding missing `apps/web/.env.local`. |
+| `2026-11-28` | `pnpm typecheck` (`turbo run typecheck && tsc -p tsconfig.tools.json`) | `Windows / pnpm 9.15.0` | `PASS` | `6 successful, 6 total` (`contracts`, `solana-client`, `core`, `mobile`, `infrastructure`, `web`). |
+| `2026-11-28` | `pnpm test` (`vitest run`) | `Windows / Vitest 2.1.9` | `PASS (4 skipped)` | `13 passed \| 4 skipped (17)` files; `49 passed \| 4 todo (53)` tests (`tests/queues/` has 4 `todo` specs). |
+| `2026-11-28` | `pnpm --filter @encore/web build` (`next build`) | `Windows / Next.js 15.5.29` | `PASS` | `28/28` pages and `/api/v1/*` routes compiled cleanly. |
+| `2026-11-28` | `pnpm test:rust` (`cargo test`) / Anchor / Supabase CLI | `Windows` | `Not Run` | `cargo`, `rustc`, `solana`, `anchor`, and `supabase` CLIs are not installed in `PATH`. |
