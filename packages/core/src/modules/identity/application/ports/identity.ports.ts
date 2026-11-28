@@ -8,11 +8,15 @@ import type {
   AuthChallengeRecord,
   AuthIdentityRecord,
   EncoreUser,
+  ReviewAssignmentAccess,
+  StudioChannelAccess,
   WalletRecord
 } from "../../domain/user.entity.js";
 
 export interface UserRepositoryPort {
   findUserById(userId: string): Promise<EncoreUser | null>;
+  findStudioChannelForUser(userId: string): Promise<StudioChannelAccess | null>;
+  listReviewAssignmentsForUser(userId: string): Promise<ReviewAssignmentAccess[]>;
   findUserByIdentity(
     provider: AuthProvider,
     providerSubject: string
@@ -40,16 +44,33 @@ export interface UserRepositoryPort {
 
 export interface ChallengeRepositoryPort {
   createChallenge(params: {
+    message: string;
     nonce: string;
     address: string;
     intendedAction: "login" | "link_wallet";
     expiresAt: Date;
+    messageDigest: string;
   }): Promise<AuthChallengeRecord>;
   consumeChallenge(
     nonce: string,
     address: string,
-    now: Date
+    now: Date,
+    messageDigest: string,
+    intendedAction: AuthChallengeRecord["intendedAction"]
   ): Promise<AuthChallengeRecord | null>;
+}
+
+export interface VerifiedExternalIdentity {
+  provider: AuthProvider;
+  providerSubject: string;
+  displayName: string;
+  avatarUrl?: string;
+  walletAddress?: string;
+  walletType?: WalletType;
+}
+
+export interface ExternalIdentityVerifierPort {
+  verify(proof: { accessToken: string; profileProof: string; walletProof: string }): Promise<VerifiedExternalIdentity>;
 }
 
 export interface SignatureVerifierPort {

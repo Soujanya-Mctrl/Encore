@@ -7,7 +7,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,18 +18,18 @@
     "@pollar/react": "0.12.0",
     "@pollar/solana-wallet-standard-adapter": "0.12.0",
     "@solana/web3.js": "1.95.8",
-    "lucide-react": "^1.81.0",
-    "next": "^15.1.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "zod": "^3.23.8"
+    "lucide-react": "1.81.0",
+    "next": "15.5.29",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@encore/config": "workspace:*",
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "@types/node": "22.20.7",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
   }
 }

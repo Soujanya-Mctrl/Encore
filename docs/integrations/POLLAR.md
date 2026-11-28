@@ -1,26 +1,28 @@
-# Pollar Integration & Devnet Feasibility Report
+# Pollar Integration and Devnet Feasibility
 
-> **Verified SDK Versions:** `@pollar/core@0.12.0`, `@pollar/react@0.12.0`, `@pollar/solana-wallet-standard-adapter@0.12.0`
+## Implemented SDK integration
 
-## 1. Verified Capabilities (From Installed `.d.ts`)
+Encore pins `@pollar/core`, `@pollar/react` and `@pollar/solana-wallet-standard-adapter` to `0.12.0`. Installed SDK declarations and the official source were inspected. Live external-wallet SIWS and device-bound backend verification passed on 27 November 2026 using the configured testnet application.
 
-| Capability | Status in `@pollar/*@0.12.0` | Encore Implementation |
-| :--- | :--- | :--- |
-| **Google & GitHub Social Auth** | Supported (`login({ provider: 'google' \| 'github' })`) | Wired in `EncorePollarProvider` |
-| **Email OTP Auth** | Supported (`beginEmailLogin()`, `sendEmailCode(email)`, `verifyEmailCode(code)`) | Wired in `LoginPanel` |
-| **Embedded Solana Wallet** | Supported (`custody: 'internal'`, `wallets` array) | Retrieved via `usePollar().wallets` |
-| **DPoP Session Security** | RFC 9449 DPoP-bound tokens (`<=10 min` TTL) with non-extractable WebCrypto keypair | Browser-side session managed by `PollarProvider` |
-| **External Wallet Discovery** | Supported via `@pollar/solana-wallet-standard-adapter` (`solanaWalletStandardAdapters()`) | Discovers Phantom, Solflare, Backpack |
-| **SIWS in `PollarClientConfig.walletAdapters`** | **Not yet chain-aware in `0.12.0`** (`.d.ts` notes `walletAdapters` is currently Stellar SEP-10) | Encore runs native Solana Ed25519 SIWS challenge-verify directly via `SolanaWalletStandardAdapter` |
-| **SOL / SPL Transfers (Embedded)** | Supported via `sendPayment()` (`/v2/tx/build-sign-submit`) | Transfer-only for embedded wallets |
-| **Custom Anchor Instructions** | **External wallets only** via `SolanaWalletStandardAdapter.signSolanaTransaction()` | Embedded wallets cannot sign arbitrary Anchor instructions; fallback to external Wallet Standard signer |
+- Email OTP and Google/GitHub login use the official React provider.
+- Configured external Solana wallets use Pollar's official Wallet Standard adapters and its login flow.
+- A single injected WebCrypto key manager supplies the SDK and backend-exchange DPoP proofs.
+- The backend sends device-signed proofs to fixed `/v3/auth/session/resume` and `/v3/wallet/state` endpoints. Only authenticated upstream responses supply identity and wallet claims.
+- Provider nonce challenges are returned to the browser for fresh proofs. No raw profile fields are accepted as authentication.
+- Only identified Solana devnet wallets are bound. Unknown/mainnet/Stellar/pending wallets do not become verified devnet wallets.
+- Without Pollar configuration, the original direct Wallet Standard sign-in remains a development fallback, not proof of a real Pollar integration.
 
----
+## Live evidence and limits
 
-## 2. Dashboard & Environment Setup
+The real browser test passes through the official Pollar login UI, exchanges fresh DPoP proofs for an Encore HttpOnly session, binds the generated external wallet, survives reload and rejects admin-role onboarding. The separate Node spike independently verifies the provider session. See [sanitized results](../testing/PHASE_ONE_LIVE_RESULTS.json) and the [Phase 1 report](../planning/PHASE_ONE_REPORT.md).
 
-1. Create a Pollar application at `https://dashboard.pollar.xyz/`.
-2. Enable **Solana Devnet** in Test Mode and copy your publishable key (`NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`).
-3. Enable **Google**, **GitHub**, and **Email OTP** authentication methods and embedded Solana wallet provisioning.
-4. Add allowed origins and OAuth redirect URLs (`http://localhost:3000` for local dev; your Vercel URL for staging).
-5. Set `ENCORE_SESSION_SECRET` (32+ random bytes) in `.env.local` and Vercel environment variables.
+The provider requires an Origin header. An authenticated external-only SIWS session returns HTTP 409 `SDK_WALLET_REQUIRED` from `/v3/wallet/state`. Encore accepts its authenticated profile wallet address only when application configuration confirms a Solana-only testnet app, with no conflicting wallet state. Provider nonce challenges cause fresh proofs; bounded transient retries also generate fresh proofs.
+
+Email OTP, Google/GitHub login and hosted-wallet provisioning are wired but were not exercised live. Embedded custom Anchor instruction signing remains unverified. Keep the external signer fallback; its custom-transaction adapter unit test and real devnet signing passed. Those checks do not establish hosted-wallet custom Anchor support.
+
+During development, restart Next.js after changing authentication verifier classes or provider environment settings: its process-wide container can retain the previous implementation through hot reload. Final live browser evidence was collected from a clean server, not that stale process.
+
+## References
+
+- [Official SDK](https://github.com/pollar-xyz/pollar)
+- [Pollar dashboard](https://dashboard.pollar.xyz/)

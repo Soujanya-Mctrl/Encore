@@ -2,24 +2,12 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuthenticatedUser } from "@/server/request-context";
+import { pkceStore } from "@/server/pkce-store";
 
 const PkceCodeRequestSchema = z.object({
   codeChallenge: z.string().min(43).max(128),
   redirectUri: z.string().url()
 });
-
-interface PkceEntry {
-  userId: string;
-  roles: readonly string[];
-  codeChallenge: string;
-  redirectUri: string;
-  expiresAt: number;
-}
-
-const globalPkce = globalThis as unknown as {
-  __encorePkceStore?: Map<string, PkceEntry>;
-};
-export const pkceStore = (globalPkce.__encorePkceStore ??= new Map<string, PkceEntry>());
 
 export async function POST(req: Request) {
   const auth = await requireAuthenticatedUser();

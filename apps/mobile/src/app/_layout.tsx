@@ -1,21 +1,8 @@
-import React from "react";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+import '../global.css'
+
+import { Stack } from 'expo-router'
+import { AppProviders } from '@/features/core/data-access/app-providers'
 
 export default function RootLayout() {
-  return (
-    <>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: "#151725" },
-          headerTintColor: "#FFFFFF",
-          contentStyle: { backgroundColor: "#151725" }
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="studio/campaigns" options={{ title: "Artist Studio · Campaigns" }} />
-      </Stack>
-    </>
-  );
+  return <AppProviders><Stack screenOptions={{ headerShown: false }}><Stack.Screen name="index" /><Stack.Screen name="(tabs)" /><Stack.Screen name="track/[id]" /><Stack.Screen name="player/[id]" /><Stack.Screen name="support/[id]" /><Stack.Screen name="recommendations/[id]" /><Stack.Screen name="lyrics/[id]" /><Stack.Screen name="studio" /><Stack.Screen name="onboarding" /></Stack></AppProviders>
 }

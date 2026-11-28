@@ -9,12 +9,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@solana/web3.js": "1.95.8"
-  },
   "devDependencies": {
     "@encore/config": "workspace:*",
-    "@types/node": "^22.10.0",
-    "typescript": "^5.7.2"
+    "typescript": "5.9.3"
   }
 }

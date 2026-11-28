@@ -28,6 +28,12 @@ function createFakeRepo(): UserRepositoryPort & ChallengeRepositoryPort {
     async findUserById(id) {
       return users.get(id) ?? null;
     },
+    async findStudioChannelForUser() {
+      return null;
+    },
+    async listReviewAssignmentsForUser() {
+      return [];
+    },
     async findUserByIdentity(provider, subject) {
       const ident = idents.get(`${provider}:${subject}`);
       return ident ? (users.get(ident.userId) ?? null) : null;
@@ -90,9 +96,9 @@ function createFakeRepo(): UserRepositoryPort & ChallengeRepositoryPort {
       challenges.set(p.nonce, rec);
       return rec;
     },
-    async consumeChallenge(nonce, address, now) {
+    async consumeChallenge(nonce, address, now, digest, intendedAction) {
       const rec = challenges.get(nonce);
-      if (!rec || rec.address !== address || rec.consumedAt || rec.expiresAt < now) return null;
+      if (!rec || rec.address !== address || rec.messageDigest !== digest || rec.intendedAction !== intendedAction || rec.consumedAt || rec.expiresAt <= now) return null;
       const consumed = { ...rec, consumedAt: now };
       challenges.set(nonce, consumed);
       return consumed;
@@ -158,17 +164,31 @@ describe("Identity Domain & Policies", () => {
     const clock = { now: () => now };
 
     await repo.createChallenge({
+      message: `Encore login ${VALID_ADDR_2} nonce-1234567890123456`,
       nonce: "nonce-1234567890123456",
       address: VALID_ADDR_2,
       intendedAction: "login",
+      messageDigest: "a".repeat(64),
       expiresAt: new Date("2026-11-26T12:05:00Z")
     });
 
     const msg = `Encore login ${VALID_ADDR_2} nonce-1234567890123456`;
+    const mismatched = await verifyWalletChallenge(repo, verifier, clock, {
+      address: VALID_ADDR_2,
+      nonce: "nonce-1234567890123456",
+      message: msg,
+      messageDigest: "b".repeat(64),
+      intendedAction: "login",
+      signatureBase64: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    });
+    expect(mismatched.ok).toBe(false);
+
     const okRes = await verifyWalletChallenge(repo, verifier, clock, {
       address: VALID_ADDR_2,
       nonce: "nonce-1234567890123456",
       message: msg,
+      messageDigest: "a".repeat(64),
+      intendedAction: "login",
       signatureBase64: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
     });
     expect(okRes.ok).toBe(true);
@@ -177,6 +197,8 @@ describe("Identity Domain & Policies", () => {
       address: VALID_ADDR_2,
       nonce: "nonce-1234567890123456",
       message: msg,
+      messageDigest: "a".repeat(64),
+      intendedAction: "login",
       signatureBase64: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
     });
     expect(replayRes.ok).toBe(false);

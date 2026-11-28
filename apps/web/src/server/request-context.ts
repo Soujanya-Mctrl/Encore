@@ -1,33 +1,27 @@
-import { cookies, headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import type { EncoreUser } from "@encore/core";
 import type { UserRole } from "@encore/contracts";
+import { authJson } from "./browser-auth-request";
 import { getServerContainer } from "./container";
 
 export const ENCORE_SESSION_COOKIE = "encore_session";
 
-async function extractSessionToken(): Promise<string | null> {
-  // 1. Native Expo Android bearer token path
-  const headerStore = await headers();
-  const authHeader = headerStore.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const bearer = authHeader.slice(7).trim();
-    if (bearer.length > 0) return bearer;
-  }
+export const SESSION_TTL_SECONDS = 7200;
 
-  // 2. Expo Web / Browser HttpOnly cookie path
+export async function getSessionClaims() {
   const cookieStore = await cookies();
-  return cookieStore.get(ENCORE_SESSION_COOKIE)?.value ?? null;
+  const token = cookieStore.get(ENCORE_SESSION_COOKIE)?.value;
+  if (!token) return null;
+  return getServerContainer().sessions.verifySessionToken(token);
 }
 
 export async function getAuthenticatedUser(): Promise<EncoreUser | null> {
-  const token = await extractSessionToken();
-  if (!token) return null;
-
-  const { sessions, users } = getServerContainer();
-  const verified = await sessions.verifySessionToken(token);
+  const verified = await getSessionClaims();
   if (!verified) return null;
 
+  const { activeSessions, clock, users } = getServerContainer();
+  if (!(await activeSessions.isActive(verified.sessionId, verified.userId, clock.now()))) return null;
   return users.findUserById(verified.userId);
 }
 
@@ -40,13 +34,13 @@ export async function requireAuthenticatedUser(
   if (!user) {
     return {
       user: null,
-      errorResponse: NextResponse.json({ error: "Authentication required" }, { status: 401 })
+      errorResponse: authJson({ error: "Authentication required" }, 401)
     };
   }
   if (allowedRoles && !allowedRoles.some((r) => user.roles.includes(r))) {
     return {
       user: null,
-      errorResponse: NextResponse.json({ error: "Insufficient role permissions" }, { status: 403 })
+      errorResponse: authJson({ error: "Insufficient role permissions" }, 403)
     };
   }
   return { user, errorResponse: null };
@@ -58,7 +52,7 @@ export function attachSessionCookie(response: NextResponse, token: string): void
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 7200
+    maxAge: SESSION_TTL_SECONDS
   });
 }
 

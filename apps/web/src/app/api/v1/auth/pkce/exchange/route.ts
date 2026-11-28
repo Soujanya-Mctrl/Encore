@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerContainer } from "@/server/container";
-import { pkceStore } from "../code/route";
+import { pkceStore } from "@/server/pkce-store";
 
 const PkceExchangeSchema = z.object({
   code: z.string().min(16),

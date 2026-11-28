@@ -1,5 +1,7 @@
+export * from "./authentication/active-sessions.repository.js";
 export * from "./authentication/hmac-session.service.js";
 export * from "./authentication/ed25519-verifier.js";
+export * from "./authentication/pollar-session-verifier.js";
 export * from "./persistence/repositories/in-memory-identity.repository.js";
 export * from "./persistence/repositories/supabase-identity.repository.js";
 export * from "./persistence/repositories/in-memory-marketplace.repository.js";

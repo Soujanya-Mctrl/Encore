@@ -9,7 +9,7 @@ import {
 
 describe("Authentication Infrastructure", () => {
   it("issues and verifies HMAC session tokens and rejects tampering", async () => {
-    const svc = new HmacSessionTokenService("test-secret-key-12345");
+    const svc = new HmacSessionTokenService("test-secret-key-12345-at-least-32-bytes");
     const token = await svc.issueSessionToken({
       userId: "user-1",
       roles: ["listener", "artist"],

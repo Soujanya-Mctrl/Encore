@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "../../../../kernel/result.js";
 import type { AuthProvider, OnboardingProfileInput } from "@encore/contracts";
 import { canPubliclyAssignRole, isValidSolanaAddress } from "../../domain/policies.js";
-import type { EncoreUser } from "../../domain/user.entity.js";
+import { WalletAlreadyBoundError, type EncoreUser } from "../../domain/user.entity.js";
 import type { UserRepositoryPort } from "../ports/identity.ports.js";
 
 export async function authenticateOrCreateUser(
@@ -20,6 +20,12 @@ export async function authenticateOrCreateUser(
   }
 
   let user = await repo.findUserByIdentity(params.provider, params.providerSubject);
+  if (params.walletAddress) {
+    const existingOwner = await repo.findUserByWalletAddress(params.walletAddress);
+    if (existingOwner && existingOwner.id !== user?.id) {
+      return err(new WalletAlreadyBoundError());
+    }
+  }
   if (!user) {
     const created = await repo.createUserWithIdentity({
       displayName: params.displayName,
@@ -32,16 +38,17 @@ export async function authenticateOrCreateUser(
   }
 
   if (params.walletAddress) {
-    const existingOwner = await repo.findUserByWalletAddress(params.walletAddress);
-    if (existingOwner && existingOwner.id !== user.id) {
-      return err(new Error("Wallet is already bound to another Encore account"));
+    try {
+      await repo.upsertVerifiedWallet({
+        userId: user.id,
+        address: params.walletAddress,
+        walletType: params.walletType ?? "embedded",
+        isPrimary: true
+      });
+    } catch (error) {
+      if (error instanceof WalletAlreadyBoundError) return err(error);
+      throw error;
     }
-    await repo.upsertVerifiedWallet({
-      userId: user.id,
-      address: params.walletAddress,
-      walletType: params.walletType ?? "embedded",
-      isPrimary: true
-    });
   }
 
   return ok(user);
