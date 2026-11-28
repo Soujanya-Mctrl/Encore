@@ -37,6 +37,7 @@ Encore is a music discovery, provenance, and fan-support platform built for the 
 - **Build status:** The prototype includes settlement instructions, checkout APIs, and fee tests. Crowdfunding creation, pledging, milestone release, and refunds are implemented in code. End-to-end devnet payout, refund, and reconciliation checks remain pending. [Solana program](programs/encore/src/lib.rs) · [Economy integration tests](tests/contracts/encore-economics.test.ts)
 
 ## The problem
+See the [UI and backend integration walkthrough](docs/testing/UI_BACKEND_INTEGRATION_WALKTHROUGH.md) for local Next.js, Expo Web, Android, and API test steps.
 
 - **Listeners want disclosure.** In Deezer and Ipsos’s 2026 survey, 80% of respondents agreed that both fully AI-generated and AI-assisted music should be clearly labeled. This measures attitudes in that survey. [Deezer and Ipsos AI music barometer](https://newsroom-deezer.com/2026/11/ai-music-labeling-deezer-ipsos-survey/)
 - **Credits, evidence, and permissions answer different questions.** C2PA’s music guidance treats AI disclosure, production history, and creator credits as provenance use cases. Licensing and ownership still need their own evidence and decisions. [C2PA music asset guidance](https://spec.c2pa.org/specifications/specifications/2.4/music/guidance_applying_content_credential_music_assets.html)

@@ -69,6 +69,7 @@ async function main() {
       if (supabase) {
         for (let idx = 0; idx < check.events.length; idx++) {
           const ev = check.events[idx];
+          if (!ev) continue;
           await supabase.from("chain_events").upsert(
             {
               signature: sig,

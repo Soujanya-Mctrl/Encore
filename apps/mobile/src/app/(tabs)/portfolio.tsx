@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { encoreApiFetch } from "../../lib/api-client";
 import { useTransactionLifecycle } from "../../features/marketplace/useTransactionLifecycle";
+import { useEncorePortfolio } from "../../features/marketplace/useEncorePortfolio";
 
 export default function PortfolioScreen() {
-  const { txRecord, clear } = useTransactionLifecycle();
+  const { account, portfolio, loading, error, refresh, signIn, token } = useEncorePortfolio();
+  const { txRecord, clear } = useTransactionLifecycle(token);
   const [passId, setPassId] = useState("");
   const [spotListingId, setSpotListingId] = useState("");
   const [campaignId, setCampaignId] = useState("");
@@ -15,9 +17,10 @@ export default function PortfolioScreen() {
       setStatusMessage(null);
       await encoreApiFetch(path, {
         method: "POST",
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        bearerToken: token
       });
-      setStatusMessage(`Submitted ${path}`);
+      setStatusMessage(`Request sent to ${path}. Check the response before signing any transaction.`);
     } catch (e) {
       setStatusMessage(e instanceof Error ? e.message : "Action failed");
     }
@@ -30,6 +33,17 @@ export default function PortfolioScreen() {
         Owned Supporter Passes, fixed-price resale listings, campaign pledges, distribution claims,
         and Solana Explorer receipts.
       </Text>
+      {!account ? <Pressable onPress={() => void signIn()} style={{ marginTop: 14 }}><Text style={{ color: "#7CB7FF", fontWeight: "700" }}>Sign in to load your portfolio</Text></Pressable> : null}
+      {account && loading ? <Text style={{ color: "#94A3B8", marginTop: 12 }}>Loading portfolio…</Text> : null}
+      {account && error ? <Pressable onPress={() => void refresh()}><Text style={{ color: "#F87171", marginTop: 12 }}>{error} · Tap to retry</Text></Pressable> : null}
+      {portfolio ? <View style={{ gap: 8, marginTop: 14 }}>
+        <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700" }}>Owned passes</Text>
+        {portfolio.passes.length ? portfolio.passes.map((pass) => <View key={pass.id} style={{ backgroundColor: "#1B1E30", borderRadius: 12, padding: 12 }}><Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Pass #{pass.serial} · {pass.status}</Text><Text style={{ color: "#94A3B8", fontSize: 12 }}>Track {pass.trackId}</Text></View>) : <Text style={{ color: "#94A3B8" }}>No passes found.</Text>}
+        <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginTop: 12 }}>Campaign shares</Text>
+        {portfolio.shareBalances.length ? portfolio.shareBalances.map((balance) => <Text key={balance.campaignId} style={{ color: "#94A3B8" }}>{balance.campaignTitle} · {balance.units} units</Text>) : <Text style={{ color: "#94A3B8" }}>No campaign shares found.</Text>}
+        <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginTop: 12 }}>Recent receipts</Text>
+        {portfolio.receipts.slice(0, 5).map((receipt) => <Text selectable key={receipt.id} style={{ color: "#94A3B8", fontSize: 11 }}>{receipt.signature}</Text>)}
+      </View> : null}
 
       {txRecord && (
         <View

@@ -21,9 +21,10 @@ export function getBrowserAuthOrigin(request?: Request): string | null {
     if (configured) {
       const url = new URL(configured);
       const production = process.env.NODE_ENV === "production";
+      const localHttp = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
       if (
         url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
-        (production ? url.protocol !== "https:" : !["http:", "https:"].includes(url.protocol))
+        (production ? url.protocol !== "https:" && !localHttp : !["http:", "https:"].includes(url.protocol))
       ) return null;
       return url.origin;
     }
@@ -34,11 +35,28 @@ export function getBrowserAuthOrigin(request?: Request): string | null {
   }
 }
 
+export function getAllowedBrowserAuthOrigins(request?: Request): Set<string> {
+  const origins = new Set<string>();
+  const primary = getBrowserAuthOrigin(request);
+  if (primary) origins.add(primary);
+  for (const configured of (process.env.ENCORE_WEB_CLIENT_ORIGINS ?? "").split(",")) {
+    try {
+      const url = new URL(configured.trim());
+      const localHttp = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+      if (!url.username && !url.password && !url.search && !url.hash && url.pathname === "/" &&
+        (process.env.NODE_ENV !== "production" ? ["http:", "https:"].includes(url.protocol) : url.protocol === "https:" || localHttp)) {
+        origins.add(url.origin);
+      }
+    } catch { /* Ignore malformed optional client origins. */ }
+  }
+  return origins;
+}
+
 export function guardBrowserAuthWrite(request: Request, requiresJson = true) {
-  const origin = getBrowserAuthOrigin(request);
-  if (!origin) return authJson({ error: "Authentication origin is not configured" }, 503);
-  if (request.headers.get("origin") !== origin) {
-    return authJson({ error: "Authentication requires a same-origin request" }, 403);
+  const origins = getAllowedBrowserAuthOrigins(request);
+  if (!origins.size) return authJson({ error: "Authentication origin is not configured" }, 503);
+  if (!origins.has(request.headers.get("origin") ?? "")) {
+    return authJson({ error: "Request origin is not allowed" }, 403);
   }
   return requiresJson ? requireAuthJson(request) : null;
 }

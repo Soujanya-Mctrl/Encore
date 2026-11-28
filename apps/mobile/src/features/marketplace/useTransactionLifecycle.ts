@@ -70,11 +70,11 @@ export function useTransactionLifecycle(bearerToken?: string | null) {
 
   useEffect(() => {
     if (!record || (record.state !== "submitted" && record.state !== "pending")) return;
-    void refreshReceipt(record);
+    const initial = setTimeout(() => { void refreshReceipt(record); }, 0);
     const timer = setInterval(() => {
       void refreshReceipt(record);
     }, 4000);
-    return () => clearInterval(timer);
+    return () => { clearTimeout(initial); clearInterval(timer); };
   }, [record, refreshReceipt]);
 
   const markReview = useCallback(
