@@ -2,6 +2,8 @@ import crypto from "node:crypto";
 import type { UserRole } from "@encore/contracts";
 import type { SessionTokenPort } from "@encore/core";
 
+const SESSION_VERSION = "v2";
+
 interface SessionClaims {
   sub: string;
   roles: readonly UserRole[];
@@ -31,9 +33,9 @@ export class HmacSessionTokenService implements SessionTokenPort {
     const body = Buffer.from(JSON.stringify(claims)).toString("base64url");
     const sig = crypto
       .createHmac("sha256", this.secret)
-      .update(body)
+      .update(`${SESSION_VERSION}.${body}`)
       .digest("base64url");
-    return `${body}.${sig}`;
+    return `${SESSION_VERSION}.${body}.${sig}`;
   }
 
   async verifySessionToken(token: string): Promise<{
@@ -42,13 +44,13 @@ export class HmacSessionTokenService implements SessionTokenPort {
     sessionId: string;
   } | null> {
     const parts = token.split(".");
-    if (parts.length !== 2) return null;
-    const [body, sig] = parts;
+    if (parts.length !== 3 || parts[0] !== SESSION_VERSION) return null;
+    const [, body, sig] = parts;
     if (!body || !sig) return null;
 
     const expectedSig = crypto
       .createHmac("sha256", this.secret)
-      .update(body)
+      .update(`${SESSION_VERSION}.${body}`)
       .digest("base64url");
 
     const sigBuf = Buffer.from(sig);
