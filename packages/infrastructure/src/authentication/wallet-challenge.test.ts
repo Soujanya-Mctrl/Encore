@@ -1,4 +1,4 @@
-import { createPrivateKey, sign } from "node:crypto";
+import { createHash, createPrivateKey, sign } from "node:crypto";
 import { Keypair } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 import { verifyWalletChallenge } from "@encore/core";
@@ -12,9 +12,9 @@ async function fixture(expiresAt = new Date(now.getTime() + 60_000)) {
   const nonce = "nonce-for-encore-phase-one";
   const message = `localhost:3000 wants you to sign in with your Solana account:\n${address}\nAction: login\nCluster: devnet\nNonce: ${nonce}`;
   const repo = new InMemoryIdentityRepository();
-  await repo.createChallenge({ nonce, address, message, intendedAction: "login", expiresAt });
+  await repo.createChallenge({ nonce, address, message, intendedAction: "login", expiresAt, messageDigest: createHash("sha256").update(message).digest("hex") });
   const key = createPrivateKey({ key: Buffer.concat([Buffer.from("302e020100300506032b657004220420", "hex"), Buffer.from(payer.secretKey.slice(0, 32))]), type: "pkcs8", format: "der" });
-  const payload = (text = message) => ({ address, nonce, message: text, signatureBase64: sign(null, Buffer.from(text), key).toString("base64") });
+  const payload = (text = message) => ({ address, nonce, message: text, messageDigest: createHash("sha256").update(text).digest("hex"), intendedAction: "login" as const, signatureBase64: sign(null, Buffer.from(text), key).toString("base64") });
   const verify = (input = payload()) => verifyWalletChallenge(repo, new NodeEd25519Verifier(), { now: () => now }, input);
   return { verify, payload, message };
 }

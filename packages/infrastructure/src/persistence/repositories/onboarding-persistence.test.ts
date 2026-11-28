@@ -35,7 +35,7 @@ describe("Onboarding persistence", () => {
     const repo = new InMemoryIdentityRepository();
     const expiresAt = new Date(Date.now() + 60_000);
     const digest = "a".repeat(64);
-    await repo.createChallenge({ nonce: "n", address: "wallet", intendedAction: "login", expiresAt, messageDigest: digest });
+    await repo.createChallenge({ message: "m", nonce: "n", address: "wallet", intendedAction: "login", expiresAt, messageDigest: digest });
     const now = new Date();
     expect(await repo.consumeChallenge("n", "wallet", now, "b".repeat(64), "login")).toBeNull();
     expect(await repo.consumeChallenge("n", "wallet", now, digest, "link_wallet")).toBeNull();
