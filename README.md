@@ -30,10 +30,11 @@ Encore is a music discovery, provenance, and fan-support platform built for the 
 | 💸 **Send a direct tip** | **100% of the tip** goes to the artist’s payout wallet in the MVP fee model. Encore charges **0% platform fee** on tips. Network fees are separate. |
 | 🎟️ **Buy a Supporter Pass** | The artist sets the terms for a finite run of creator perks. On a primary sale the artist receives the price minus a 5% platform fee, rounded down in smallest units. |
 | 🔁 **Buy a listed pass from another fan** | On an eligible resale, the artist receives a 10% share and the platform receives 5%, both rounded down. The seller receives the remainder. |
+| 🤝 **Back an artist’s crowdfunding campaign** | Fans pledge test USDC to fund a project. Pledges go into a campaign escrow tied to a Music Passport, and approved milestones unlock funds for the artist. Eligible backers can claim refunds under the campaign rules. |
 
 - **Checkout:** Choose the release and amount or pass → review recipient and fees → sign → look up the receipt.
 - **Example:** A 5 test-USDC tip sends all 5 to the artist. A 10 test-USDC primary pass sale sends 9.50 to the artist and 0.50 to Encore. [Economy rules and fee examples](docs/economics/TOKENOMICS_AND_ECONOMICS.md)
-- **Build status:** The devnet prototype includes settlement instructions, checkout APIs, and fee tests. The complete multi-wallet payout and redemption demo is pending. [Economy integration tests](tests/contracts/encore-economics.test.ts)
+- **Build status:** The prototype includes settlement instructions, checkout APIs, and fee tests. Crowdfunding creation, pledging, milestone release, and refunds are implemented in code. End-to-end devnet payout, refund, and reconciliation checks remain pending. [Solana program](programs/encore/src/lib.rs) · [Economy integration tests](tests/contracts/encore-economics.test.ts)
 
 ## The problem
 
