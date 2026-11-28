@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { WalletAlreadyBoundError } from "@encore/core";
 import type {
   AuthProvider,
   OnboardingProfileInput,
@@ -109,47 +110,30 @@ export class SupabaseIdentityRepository
     providerSubject: string;
     initialRole?: UserRole;
   }): Promise<{ user: EncoreUser; identity: AuthIdentityRecord }> {
-    const { data: profile, error: pErr } = await this.client
-      .from("profiles")
-      .insert({
-        display_name: params.displayName,
-        avatar_url: params.avatarUrl ?? null,
-        onboarding_status: "pending"
+    if (params.initialRole && params.initialRole !== "listener") {
+      throw new Error("Identity provisioning cannot grant an elevated role");
+    }
+    const { data: ident, error } = await this.client
+      .rpc("provision_encore_identity", {
+        p_provider: params.provider,
+        p_subject: params.providerSubject,
+        p_display_name: params.displayName,
+        p_avatar_url: params.avatarUrl ?? null
       })
-      .select("*")
       .single();
-    if (pErr || !profile) throw new Error(pErr?.message ?? "Failed to create profile");
-
-    const role: UserRole = params.initialRole ?? "listener";
-    await this.client.from("user_roles").insert({ user_id: profile.id, role });
-
-    const { data: ident, error: iErr } = await this.client
-      .from("auth_identities")
-      .insert({
-        user_id: profile.id,
-        provider: params.provider,
-        provider_subject: params.providerSubject
-      })
-      .select("*")
-      .single();
-    if (iErr || !ident) throw new Error(iErr?.message ?? "Failed to create identity");
+    if (error || !ident) throw new Error(error?.message ?? "Failed to create identity");
+    const identityRow = ident as Record<string, unknown>;
+    const user = await this.findUserById(identityRow.user_id as string);
+    if (!user) throw new Error("User not found after identity provisioning");
 
     return {
-      user: {
-        id: profile.id,
-        displayName: profile.display_name,
-        avatarUrl: profile.avatar_url,
-        onboardingStatus: profile.onboarding_status as OnboardingStatus,
-        roles: [role],
-        createdAt: new Date(profile.created_at),
-        updatedAt: new Date(profile.updated_at)
-      },
+      user,
       identity: {
-        id: ident.id,
-        userId: ident.user_id,
-        provider: ident.provider as AuthProvider,
-        providerSubject: ident.provider_subject,
-        createdAt: new Date(ident.created_at)
+        id: identityRow.id as string,
+        userId: identityRow.user_id as string,
+        provider: identityRow.provider as AuthProvider,
+        providerSubject: identityRow.provider_subject as string,
+        createdAt: new Date(identityRow.created_at as string)
       }
     };
   }
@@ -158,26 +142,15 @@ export class SupabaseIdentityRepository
     userId: string,
     input: OnboardingProfileInput
   ): Promise<EncoreUser> {
-    await this.client
-      .from("profiles")
-      .update({
-        display_name: input.displayName,
-        avatar_url: input.avatarUrl || null,
-        onboarding_status: "completed",
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", userId);
-
-    await this.client
-      .from("user_roles")
-      .upsert({ user_id: userId, role: input.journey }, { onConflict: "user_id,role" });
-
-    await this.client.from("user_preferences").upsert({
-      user_id: userId,
-      preferred_genres: input.preferredGenres,
-      creative_origin_preferences: input.creativeOriginPreferences,
-      onboarding_completed_at: new Date().toISOString()
+    const { error } = await this.client.rpc("complete_encore_onboarding", {
+      p_user_id: userId,
+      p_display_name: input.displayName,
+      p_avatar_url: input.avatarUrl || null,
+      p_journey: input.journey,
+      p_preferred_genres: input.preferredGenres,
+      p_origin_preferences: input.creativeOriginPreferences
     });
+    if (error) throw new Error(error.message);
 
     const user = await this.findUserById(userId);
     if (!user) throw new Error("User not found after onboarding update");
@@ -191,30 +164,25 @@ export class SupabaseIdentityRepository
     isPrimary: boolean;
   }): Promise<WalletRecord> {
     const { data, error } = await this.client
-      .from("wallets")
-      .upsert(
-        {
-          user_id: params.userId,
-          chain: "solana",
-          address: params.address,
-          wallet_type: params.walletType,
-          is_primary: params.isPrimary,
-          verified_at: new Date().toISOString()
-        },
-        { onConflict: "address" }
-      )
-      .select("*")
+      .rpc("bind_encore_verified_wallet", {
+        p_user_id: params.userId,
+        p_address: params.address,
+        p_wallet_type: params.walletType,
+        p_is_primary: params.isPrimary
+      })
       .single();
 
+    if (error?.code === "23505") throw new WalletAlreadyBoundError();
     if (error || !data) throw new Error(error?.message ?? "Failed to persist wallet");
+    const wallet = data as Record<string, unknown>;
     return {
-      id: data.id,
-      userId: data.user_id,
+      id: wallet.id as string,
+      userId: wallet.user_id as string,
       chain: "solana",
-      address: data.address,
-      walletType: data.wallet_type as WalletType,
-      verifiedAt: new Date(data.verified_at),
-      isPrimary: data.is_primary
+      address: wallet.address as string,
+      walletType: wallet.wallet_type as WalletType,
+      verifiedAt: new Date(wallet.verified_at as string),
+      isPrimary: wallet.is_primary as boolean
     };
   }
 
