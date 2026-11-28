@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ORIGIN_CATEGORIES } from "./enums/provenance.js";
+import type { MusicPassportManifest } from "./schemas/manifest.js";
 export const ReleaseInputSchema = z
   .object({
     title: z.string().trim().min(1).max(160),
@@ -23,6 +24,32 @@ export const ReleaseInputSchema = z
   })
   .strict();
 export type ReleaseInput = z.infer<typeof ReleaseInputSchema>;
+export const StudioDraftEditSchema = z.object({
+  expectedVersion: z.number().int().positive().max(2147483646),
+  metadata: ReleaseInputSchema,
+}).strict();
+export type StudioDraftEdit = z.infer<typeof StudioDraftEditSchema>;
+
+export const PassportVersionRequestSchema = z.object({
+  expectedVersion: z.number().int().positive().max(2147483647),
+}).strict();
+
+export interface StudioTrack {
+  id: string;
+  artistId: string;
+  title: string;
+  artistName: string;
+  genre: string;
+  description: string;
+  status: "draft" | "submitted" | "approved" | "anchor_pending" | "published" | "rejected";
+  paused: boolean;
+  audioHash: string;
+  durationSeconds: number;
+  manifest: MusicPassportManifest;
+  manifestHash: string;
+  createdAt: string;
+  anchorSignature: string | null;
+}
 export const CatalogQuerySchema = z.object({
   q: z.string().trim().max(120).default(""),
   origin: z.enum(ORIGIN_CATEGORIES).optional(),

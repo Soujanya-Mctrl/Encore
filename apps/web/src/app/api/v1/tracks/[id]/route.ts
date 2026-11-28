@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params;
     const { repo } = catalog();
     const r = await repo.get(id);
-    const u = await getAuthenticatedUser();
+    const u = await getAuthenticatedUser(_req);
     if (
       !r ||
       ((r.status !== "published" || r.paused) &&
@@ -25,14 +25,14 @@ export async function GET(
 
 import { ReleaseInputSchema } from "@encore/contracts";
 import { requireAuthenticatedUser } from "@/server/request-context";
-import { rejectCrossOriginRequest } from "@/server/request-security";
+import { guardSessionAuthWrite } from "@/server/browser-auth-request";
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const denied = rejectCrossOriginRequest(req);
+  const denied = guardSessionAuthWrite(req);
   if (denied) return denied;
-  const auth = await requireAuthenticatedUser(["artist"]);
+  const auth = await requireAuthenticatedUser(["artist"], req);
   if (auth.errorResponse) return auth.errorResponse;
   return catalogResponse(async () => {
     const body = await req.json();

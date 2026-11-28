@@ -71,6 +71,17 @@ export default async function Track({
           <dt>Rights</dt>
           <dd>{t.manifest.rightsStatus}</dd>
         </dl>
+        {t.manifest.provenance && (
+          <p className="mb-4">
+            {t.manifest.provenance.outcome === "role_corroborated"
+              ? "Trusted production records corroborate an AI-generated instrumental."
+              : t.manifest.provenance.mode === "simulated"
+                ? "Simulated provenance result."
+                : t.manifest.provenance.reason === "ai_metadata_signal"
+                  ? "Audio metadata contains an AI-related signal. The origin declaration is unverified."
+                  : "The evidence leaves the origin declaration unverified."}
+          </p>
+        )}
         <p className="text-slate-400">
           A digest proves integrity of these claims. It does not prove whether
           music was made by a human or AI.

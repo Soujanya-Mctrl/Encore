@@ -34,12 +34,17 @@ export const mp3Inspector: AudioInspectorPort = {
     let offset = 0,
       frames = 0,
       seconds = 0;
+    let metadataSignal: "ai_metadata_signal" | undefined;
     if (bytes[0] === 73 && bytes[1] === 68 && bytes[2] === 51) {
       if (bytes.length < 10 || [6, 7, 8, 9].some((i) => bytes[i]! > 127))
         throw new CatalogError("Invalid ID3 header");
       offset =
         10 +
         ((bytes[6]! << 21) | (bytes[7]! << 14) | (bytes[8]! << 7) | bytes[9]!);
+      const tagText = new TextDecoder("latin1").decode(bytes.subarray(10, Math.min(offset, 65546)));
+      if (/\b(?:generated (?:by|with) (?:suno|udio|elevenlabs|ai)|ai[-_ ]generated|synthetic[-_ ]audio)\b/i.test(tagText.replaceAll("\0", ""))) {
+        metadataSignal = "ai_metadata_signal";
+      }
       if (bytes[5]! & 16) offset += 10;
     }
     while (offset + 4 <= bytes.length) {
@@ -89,6 +94,6 @@ export const mp3Inspector: AudioInspectorPort = {
       throw new CatalogError(
         "Provide a complete MP3 preview of up to 15 minutes",
       );
-    return { durationSeconds: Math.round(seconds * 1000) / 1000 };
+    return { durationSeconds: Math.round(seconds * 1000) / 1000, ...(metadataSignal ? { metadataSignal } : {}) };
   },
 };

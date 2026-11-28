@@ -17,3 +17,4 @@ export * from "./catalog/media.js";
 export * from "./catalog/supabase-catalog.js";
 
 export * from "./catalog/registry.js";
+export * from "./provenance/schnorr.js";

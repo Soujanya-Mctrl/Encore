@@ -7,8 +7,8 @@ This roadmap follows the 0–14 phase sequence agreed for the current build. The
 | 0. Feasibility & Setup | Complete | Toolchain, credentials, and Solana devnet setup. |
 | 1. Authentication & Onboarding | Wallet path verified locally | Browser and Expo API sessions, revocation, and listener/artist onboarding verified. The hosted schema and live Pollar email, social, and embedded-wallet paths still need verification. |
 | 2. Database & Infrastructure | Database and worker verified locally | Schema, access controls, private storage policy, real PGMQ delivery, retries, and dead-letter handling verified. Hosted migration and worker activation remain pending. |
-| 3. Artist Studio | Next | Prior registry and upload work is available. Complete the contributor and creator dashboard workflows. |
-| 4. Provenance Engine | Partial | The devnet registry and Music Passport history exist. Complete creation checkpoints, the contribution graph, and their publication workflow. |
+| 3. Artist Studio | Backend implemented | Expo-facing owner APIs cover channel activation, private uploads, credits and metadata, revision submission, and catalog delisting. Expo screens and hosted rollout are pending. |
+| 4. Provenance Engine | Scoped proof implemented | Demo and signed-instrumental proof paths create immutable Passport revisions. Production issuer integration and full-track coverage remain pending. |
 | 5. Licensing & Rights Management | Pending | Permission checks, provider restrictions, and rights documentation. |
 | 6. Music Discovery & Player | Partial | Catalog search and signed playback exist. Complete demo tracks, filters, and player state. |
 | 7. Artist Monetization | Partial | Campaign, milestone, and distribution APIs and database projections are integrated. Verify Passport-bound settlement and reconciliation on devnet. |

@@ -1,14 +1,14 @@
 import { catalog } from "@/server/catalog";
 import { catalogResponse } from "@/server/catalog-http";
 import { requireAuthenticatedUser } from "@/server/request-context";
-import { rejectCrossOriginRequest } from "@/server/request-security";
+import { guardSessionAuthWrite } from "@/server/browser-auth-request";
 import { verifyUploadGrant } from "@/server/upload-grant";
 import { ReleaseInputSchema } from "@encore/contracts";
 import { CatalogError } from "@encore/core";
 export async function POST(req: Request) {
-  const denied = rejectCrossOriginRequest(req);
+  const denied = guardSessionAuthWrite(req);
   if (denied) return denied;
-  const auth = await requireAuthenticatedUser(["artist"]);
+  const auth = await requireAuthenticatedUser(["artist"], req);
   if (auth.errorResponse) return auth.errorResponse;
   return catalogResponse(async () => {
     const body = await req.json().catch(() => null),
@@ -27,6 +27,9 @@ export async function POST(req: Request) {
     }
     const bytes = await storage.download(grant.path);
     try {
+      if (grant.size !== undefined && grant.size !== bytes.byteLength) {
+        throw new CatalogError("Uploaded audio size differs from the upload request");
+      }
       const track = await service.upload(
         auth.user.id,
         parsed.data,
