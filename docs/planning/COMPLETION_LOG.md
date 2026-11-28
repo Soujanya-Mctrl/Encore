@@ -6,7 +6,7 @@
 
 ## 1. Current Project State
 
-- **Current Phase:** `PDF Phase 2 / H02–10 — registry, upload, Music Passport and catalog verified; demo audio and web staging pending`
+- **Current roadmap:** Phases 5 and 6 verified locally. The original PDF build gates are tracked below. Demo audio, hosted migration, and device verification are pending.
 
 - **Incoming marketplace milestone:** `Gate 2 & 3 Engineering Implementation — Marketplace Layer 1/2, Expo Mobile & PKCE Auth integrated on main (f1aef71); local TypeScript/Vitest/Next build checks passing`
 - **Current Phase:** `Artist Monetization Phases 1, 2 & 4 Complete on main — Migrations (0001–0006), SupabaseMarketplaceRepository, Cancel/Refund/Governance APIs & Expo UI verified; Phase 3 Anchor/Rust CLI staged`
@@ -37,12 +37,12 @@
 | `FR01` | Artist onboarding & wallet-linked profile | `In Progress` | Live Pollar external-wallet session and Supabase persistence/RLS verified; full artist submission remains Phase 2 |
 | `FR02` | Music Passport (canonical hash + versioning) | `Not Started` | — |
 | `FR03` | Review & appeal workflow | `Not Started` | — |
-| `FR04` | Discover, filters & consented playback | `Not Started` | — |
+| `FR04` | Discover, filters & consented playback | `Verified locally` | Shared catalog and live browser playback through Next.js and Expo Web. Expo Android export passed. |
 | `FR05` | ElevenLabs voice discovery, intent prep & Studio music generation | `Not Started` | Deferred to Phase 4 (`H20–30`); includes `FR05a` read-only voice discovery + `FR05b` Artist Studio ElevenLabs music generation with `CORROBORATED` generation receipt |
 | `FR06` | Direct test-USDC support + receipt | `Not Started` | — |
 | `FR07` | Supporter Pass series, resale & redemption | `Not Started` | — |
 | `FR08` | Artist dashboard & chain reconciliation | `Not Started` | — |
-| `FR09` | Rights portal & external license link-out | `Not Started` | — |
+| `FR09` | Rights portal & external license link-out | `Verified locally` | Scoped rights review, provider policy, version-bound inquiries, and withdrawal. Hosted rollout pending. |
 | `FR10` | Firecrawl authorized brief discovery | `Not Started` | — |
 | `FR11` | Documentation, exports & reproducible README | `In Progress` | Environment template, credential guide, repeatable spikes and sanitized live evidence recorded; final submission/export remains later |
 
@@ -60,6 +60,8 @@
 ---
 
 ## 5. Changelog
+
+- **28 November 2026. Phases 5 and 6.** Added private rights review, provider restrictions, license inquiries, and playback authorization. Verified search and actual browser audio against the same catalog in both web clients. [Implementation and rollout](../architecture/RIGHTS_AND_PLAYER_IMPLEMENTATION.md)
 
 - **`2026-11-28` — Phase 2 registry and catalog:** Deployed and verified the Solana devnet registry. Passed private upload, review, immutable Passport revision, finalized publication, search and playback checks. The live catalog awaits the three approved audio files. [Phase 2 handoff](PHASE_TWO_REPORT.md)
 

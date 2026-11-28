@@ -86,10 +86,31 @@ export interface SessionTokenPort {
     userId: string;
     roles: readonly UserRole[];
     sessionId: string;
+    transport?: SessionTransport;
   }): Promise<string>;
-  verifySessionToken(token: string): Promise<{
+  verifySessionToken(token: string, transport?: SessionTransport): Promise<{
     userId: string;
     roles: readonly UserRole[];
     sessionId: string;
   } | null>;
+}
+
+export type SessionTransport = "browser" | "native";
+
+export interface PkceCodeRepositoryPort {
+  create(code: {
+    codeHash: string;
+    userId: string;
+    sourceSessionId: string;
+    codeChallenge: string;
+    redirectUri: string;
+    expiresAt: Date;
+  }): Promise<void>;
+
+  consume(input: {
+    codeHash: string;
+    codeChallenge: string;
+    redirectUri: string;
+    now: Date;
+  }): Promise<{ userId: string; sourceSessionId: string } | null>;
 }

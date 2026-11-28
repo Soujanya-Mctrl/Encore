@@ -56,6 +56,16 @@ describe("Authentication Infrastructure", () => {
     ).toBe(false);
   });
 
+  it("keeps browser cookies and native bearer tokens in separate channels", async () => {
+    const svc = new HmacSessionTokenService("test-secret-key-12345-at-least-32-bytes");
+    const claims = { userId: "user-1", roles: ["listener"] as const, sessionId: "session" };
+    const browser = await svc.issueSessionToken(claims);
+    const native = await svc.issueSessionToken({ ...claims, transport: "native" });
+    expect(await svc.verifySessionToken(browser, "native")).toBeNull();
+    expect(await svc.verifySessionToken(native)).toBeNull();
+    expect(await svc.verifySessionToken(native, "native")).toEqual(claims);
+  });
+
   it("persists users and wallets in InMemoryIdentityRepository", async () => {
     const repo = new InMemoryIdentityRepository();
     const { user } = await repo.createUserWithIdentity({

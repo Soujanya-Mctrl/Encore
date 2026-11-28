@@ -28,17 +28,19 @@ export class SupabaseIdentityRepository
   }
 
   async findUserById(userId: string): Promise<EncoreUser | null> {
-    const { data: profile } = await this.client
+    const { data: profile, error: profileError } = await this.client
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
+    if (profileError) throw new Error("Unable to load Encore profile");
     if (!profile) return null;
 
-    const { data: roleRows } = await this.client
+    const { data: roleRows, error: rolesError } = await this.client
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
+    if (rolesError) throw new Error("Unable to load Encore roles");
 
     return {
       id: profile.id,
@@ -81,24 +83,26 @@ export class SupabaseIdentityRepository
     provider: AuthProvider,
     providerSubject: string
   ): Promise<EncoreUser | null> {
-    const { data: identity } = await this.client
+    const { data: identity, error } = await this.client
       .from("auth_identities")
       .select("user_id")
       .eq("provider", provider)
       .eq("provider_subject", providerSubject)
       .maybeSingle();
 
+    if (error) throw new Error("Unable to load Encore identity");
     if (!identity) return null;
     return this.findUserById(identity.user_id);
   }
 
   async findUserByWalletAddress(address: string): Promise<EncoreUser | null> {
-    const { data: wallet } = await this.client
+    const { data: wallet, error } = await this.client
       .from("wallets")
       .select("user_id")
       .eq("address", address)
       .maybeSingle();
 
+    if (error) throw new Error("Unable to load Encore wallet");
     if (!wallet) return null;
     return this.findUserById(wallet.user_id);
   }
@@ -187,7 +191,8 @@ export class SupabaseIdentityRepository
   }
 
   async listWalletsForUser(userId: string): Promise<WalletRecord[]> {
-    const { data } = await this.client.from("wallets").select("*").eq("user_id", userId);
+    const { data, error } = await this.client.from("wallets").select("*").eq("user_id", userId);
+    if (error) throw new Error("Unable to load Encore wallets");
     return (data ?? []).map((row) => ({
       id: row.id,
       userId: row.user_id,
@@ -238,7 +243,7 @@ export class SupabaseIdentityRepository
     messageDigest: string,
     intendedAction: "login" | "link_wallet"
   ): Promise<AuthChallengeRecord | null> {
-    const { data } = await this.client
+    const { data, error } = await this.client
       .from("auth_challenges")
       .update({ consumed_at: now.toISOString() })
       .eq("nonce", nonce)
@@ -250,6 +255,7 @@ export class SupabaseIdentityRepository
       .select("*")
       .maybeSingle();
 
+    if (error) throw new Error("Unable to consume wallet challenge");
     if (!data) return null;
     return {
       message: data.message,

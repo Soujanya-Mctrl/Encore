@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { PlayPreview } from "@/features/player/player";
+import { TrackRightsPanel } from "@/features/rights/rights-panel";
+import { discoveryTracks } from "@/server/discovery";
 import { catalog } from "@/server/catalog";
 import { getAuthenticatedUser } from "@/server/request-context";
 import {
@@ -22,7 +25,7 @@ export default async function Track({
       !!u?.roles.some((r) => ["reviewer", "admin"].includes(r)) && !owner;
   if (!t || ((t.status !== "published" || t.paused) && !owner && !reviewer))
     notFound();
-  const history = await repo.history(id);
+  const [history, [discovered]] = await Promise.all([repo.history(id), discoveryTracks([t])]);
   return (
     <main className="max-w-4xl mx-auto p-8 text-white">
       <Link href="/discover">← Discover</Link>
@@ -35,7 +38,8 @@ export default async function Track({
         Release: {t.status}
         {t.paused ? " · Playback suspended" : ""}
       </p>
-      {(t.status === "published" || owner || reviewer) && !t.paused && (
+      {t.status === "published" && <PlayPreview track={discovered!} />}
+      {t.status !== "published" && (owner || reviewer) && !t.paused && (
         <audio
           controls
           preload="none"
@@ -59,6 +63,7 @@ export default async function Track({
           artistName={t.artistName}
         />
       )}
+      <TrackRightsPanel track={discovered!} owner={owner} reviewer={reviewer} signedIn={Boolean(u)} />
       <section className="border border-slate-700 rounded-2xl p-6 mt-8">
         <h2 className="text-2xl">
           Music Passport · Version {t.manifest.version}
@@ -68,9 +73,20 @@ export default async function Track({
           <dd>{t.manifest.originCategory}</dd>
           <dt>Evidence</dt>
           <dd>{t.manifest.evidenceStatus}</dd>
-          <dt>Rights</dt>
+          <dt>Rights declaration at anchoring</dt>
           <dd>{t.manifest.rightsStatus}</dd>
         </dl>
+        {t.manifest.provenance && (
+          <p className="mb-4">
+            {t.manifest.provenance.outcome === "role_corroborated"
+              ? "Trusted production records corroborate an AI-generated instrumental."
+              : t.manifest.provenance.mode === "simulated"
+                ? "Simulated provenance result."
+                : t.manifest.provenance.reason === "ai_metadata_signal"
+                  ? "Audio metadata contains an AI-related signal. The origin declaration is unverified."
+                  : "The evidence leaves the origin declaration unverified."}
+          </p>
+        )}
         <p className="text-slate-400">
           A digest proves integrity of these claims. It does not prove whether
           music was made by a human or AI.

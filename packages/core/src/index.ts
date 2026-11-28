@@ -7,3 +7,4 @@ export * from "./modules/opportunities/opportunity-provider.port.js";
 
 export * from "./modules/catalog/index.js";
 export * from "./modules/catalog/lyric-review.js";
+export * from "./modules/rights/index.js";

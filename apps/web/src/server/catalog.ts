@@ -4,6 +4,7 @@ import { CatalogService } from "@encore/core";
 import {
   SupabaseCatalogRepository,
   SupabaseMediaStorage,
+  SupabaseRightsRepository,
   sha256,
   mp3Inspector,
 } from "@encore/infrastructure";
@@ -16,6 +17,7 @@ export function catalog() {
     storage = new SupabaseMediaStorage(url, key);
   return {
     repo,
+    rights: new SupabaseRightsRepository(url, key),
     storage,
     service: new CatalogService(
       repo,

@@ -10,7 +10,7 @@ const localValues = existsSync("apps/web/.env.local")
       return value.length >= 16 ? [value] : [];
     })
   : [];
-const names = spawnSync("git", ["diff", "--cached", "--name-only", "-z"], { encoding: "utf8" });
+const names = spawnSync("git", ["diff", "--cached", "--diff-filter=d", "--name-only", "-z"], { encoding: "utf8" });
 if (names.status !== 0) throw new Error("Could not inspect staged paths");
 const failed: string[] = [];
 for (const file of names.stdout.split("\0").filter(Boolean)) {

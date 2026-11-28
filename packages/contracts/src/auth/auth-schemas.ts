@@ -74,3 +74,62 @@ export type OnboardingProfileInput = z.infer<typeof OnboardingProfileSchema>;
 export type SiwsChallengeRequest = z.infer<typeof SiwsChallengeRequestSchema>;
 export type SiwsVerifyRequest = z.infer<typeof SiwsVerifyRequestSchema>;
 export type PollarSessionExchange = z.infer<typeof PollarSessionExchangeSchema>;
+
+export const EXPO_NATIVE_REDIRECT_URI = "encore://auth/callback";
+
+export const PkceCodeRequestSchema = z.object({
+  codeChallenge: z.string().regex(/^[A-Za-z0-9_-]{43}$/, "Use an S256 PKCE challenge"),
+  redirectUri: z.string().url().max(512)
+}).strict();
+
+export const PkceBrowserRequestSchema = PkceCodeRequestSchema.extend({
+  state: z.string().regex(/^[A-Za-z0-9_-]{22,128}$/)
+});
+
+export const PkceExchangeRequestSchema = z.object({
+  code: z.string().regex(/^[A-Za-z0-9_-]{32}$/),
+  codeVerifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/),
+  redirectUri: z.string().url().max(512)
+}).strict();
+
+export type PkceCodeRequest = z.infer<typeof PkceCodeRequestSchema>;
+export type PkceBrowserRequest = z.infer<typeof PkceBrowserRequestSchema>;
+export type PkceExchangeRequest = z.infer<typeof PkceExchangeRequestSchema>;
+
+type IsoTimestamp = string;
+
+export interface EncoreAuthSnapshot {
+  readonly user: {
+    readonly id: string;
+    readonly displayName: string;
+    readonly avatarUrl: string | null;
+    readonly onboardingStatus: OnboardingStatus;
+    readonly roles: readonly UserRole[];
+    readonly createdAt: IsoTimestamp;
+    readonly updatedAt: IsoTimestamp;
+  };
+  readonly wallets: readonly {
+    readonly id: string;
+    readonly userId: string;
+    readonly chain: "solana";
+    readonly address: string;
+    readonly walletType: WalletType;
+    readonly verifiedAt: IsoTimestamp;
+    readonly isPrimary: boolean;
+  }[];
+}
+
+export interface ExpoSessionResponse extends EncoreAuthSnapshot {
+  readonly accessToken: string;
+  readonly tokenType: "Bearer";
+  readonly expiresInSeconds: number;
+}
+
+export interface OnboardingResponse extends EncoreAuthSnapshot {
+  readonly studioChannel: {
+    readonly id: string;
+    readonly handle: string;
+    readonly displayName: string;
+    readonly role: "owner" | "editor";
+  } | null;
+}
