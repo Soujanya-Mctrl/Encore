@@ -46,18 +46,18 @@ Browse the full knowledge base in [`docs/WIKI.md`](docs/WIKI.md) or jump directl
 
 ## Architecture at a Glance
 
-Open the [architecture diagram gallery](docs/diagrams/architecture/README.md) for the system blueprint and marketplace proposals.
+Open the [architecture diagram gallery](docs/diagrams/architecture/README.md) for the system blueprint, Expo Artist Studio, and marketplace proposals.
 
 **Pattern:** TypeScript monorepo (`pnpm Workspaces + Turborepo`) containing a **modular monolithic application** (`apps/web` + `packages/core` + `packages/infrastructure`), a **single modular Solana Anchor program** (`programs/encore`), and shared contracts/clients.
 
 ```mermaid
 flowchart TD
-    subgraph L1["1. Experience & Voice Layer (Vercel)"]
-        UI["apps/web: Next.js App Router, Tailwind, shadcn/ui, Zustand + TanStack Query, WaveSurfer.js"]
+    subgraph L1["1. Experience & Voice Layer"]
+        UI["Target: Expo Router · Android and responsive web"]
         Voice["ElevenLabs Conversational Discovery Agent (Read-Only + Intent Prep)"]
     end
     subgraph L2["2. Modular Monolith & Domain Layer"]
-        API["Next.js Route Handlers (/api/v1/*) + server/container.ts"]
+        API["Existing shared Next.js API (/api/v1/*) and session boundary"]
         Core["packages/core: 13 DDD Business Modules + Kernel (Zero Infra Imports)"]
         Contracts["packages/contracts: Zod Schemas, API DTOs, Events, Enums"]
     end

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SignOutButton } from "@/features/auth/sign-out-button";
+import { getAuthenticatedUser } from "@/server/request-context";
 import { catalog } from "@/server/catalog";
 import { CatalogQuerySchema, ORIGIN_CATEGORIES } from "@encore/contracts";
 export const dynamic = "force-dynamic";
@@ -19,12 +21,18 @@ export default async function Discover({
   } catch {
     failed = true;
   }
+  const user = await getAuthenticatedUser();
+  const artist = user?.roles.includes("artist");
+  const href = !user ? "/login" : artist ? "/studio/dashboard" : "/onboarding?journey=artist";
+  const label = !user ? "Sign In / Connect" : artist ? "Open Artist Studio" : "Enable Artist Studio";
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 text-white">
       <nav className="flex justify-between">
         <Link href="/">ENCORE</Link>
-        <Link href="/studio/dashboard">Artist Studio</Link>
-        <Link href="/login">Sign In / Connect</Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href={href}>{label}</Link>
+          {user && <SignOutButton />}
+        </div>
       </nav>
       <h1 className="text-4xl mt-12">Discover Music</h1>
       <p className="text-slate-400 my-4">

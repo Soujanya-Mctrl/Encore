@@ -1,20 +1,27 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import type { EncoreUser } from "@encore/core";
 import type { UserRole } from "@encore/contracts";
+import { authJson } from "./browser-auth-request";
 import { getServerContainer } from "./container";
 
 export const ENCORE_SESSION_COOKIE = "encore_session";
 
-export async function getAuthenticatedUser(): Promise<EncoreUser | null> {
+export const SESSION_TTL_SECONDS = 7200;
+
+export async function getSessionClaims() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ENCORE_SESSION_COOKIE)?.value;
   if (!token) return null;
+  return getServerContainer().sessions.verifySessionToken(token);
+}
 
-  const { sessions, users } = getServerContainer();
-  const verified = await sessions.verifySessionToken(token);
+export async function getAuthenticatedUser(): Promise<EncoreUser | null> {
+  const verified = await getSessionClaims();
   if (!verified) return null;
 
+  const { activeSessions, clock, users } = getServerContainer();
+  if (!(await activeSessions.isActive(verified.sessionId, verified.userId, clock.now()))) return null;
   return users.findUserById(verified.userId);
 }
 
@@ -27,13 +34,13 @@ export async function requireAuthenticatedUser(
   if (!user) {
     return {
       user: null,
-      errorResponse: NextResponse.json({ error: "Authentication required" }, { status: 401 })
+      errorResponse: authJson({ error: "Authentication required" }, 401)
     };
   }
   if (allowedRoles && !allowedRoles.some((r) => user.roles.includes(r))) {
     return {
       user: null,
-      errorResponse: NextResponse.json({ error: "Insufficient role permissions" }, { status: 403 })
+      errorResponse: authJson({ error: "Insufficient role permissions" }, 403)
     };
   }
   return { user, errorResponse: null };
@@ -45,7 +52,7 @@ export function attachSessionCookie(response: NextResponse, token: string): void
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 7200
+    maxAge: SESSION_TTL_SECONDS
   });
 }
 

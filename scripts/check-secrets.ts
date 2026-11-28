@@ -1,13 +1,15 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const localValues = readFileSync("apps/web/.env.local", "utf8").split(/\r?\n/).flatMap((line) => {
-  if (line.trim().startsWith("#")) return [];
-  const match = line.match(/^([A-Z_]+)=(.*)$/);
-  if (!match || !/(KEY|SECRET|TOKEN)/.test(match[1]!)) return [];
-  const value = match[2]!.trim().replace(/^["']|["']$/g, "");
-  return value.length >= 16 ? [value] : [];
-});
+const localValues = existsSync("apps/web/.env.local")
+  ? readFileSync("apps/web/.env.local", "utf8").split(/\r?\n/).flatMap((line) => {
+      if (line.trim().startsWith("#")) return [];
+      const match = line.match(/^([A-Z_]+)=(.*)$/);
+      if (!match || !/(KEY|SECRET|TOKEN)/.test(match[1]!)) return [];
+      const value = match[2]!.trim().replace(/^["']|["']$/g, "");
+      return value.length >= 16 ? [value] : [];
+    })
+  : [];
 const names = spawnSync("git", ["diff", "--cached", "--name-only", "-z"], { encoding: "utf8" });
 if (names.status !== 0) throw new Error("Could not inspect staged paths");
 const failed: string[] = [];

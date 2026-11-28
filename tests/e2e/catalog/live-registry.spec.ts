@@ -37,15 +37,17 @@ test("artist upload → corrected passport → independent review → wallet sig
   const sessions = new HmacSessionTokenService(
     process.env.ENCORE_SESSION_SECRET!,
   );
+  const ownerSession = randomUUID();
+  const reviewerSession = randomUUID();
   const token = await sessions.issueSessionToken({
       userId: owner,
       roles: ["artist"],
-      sessionId: randomUUID(),
+      sessionId: ownerSession,
     }),
     reviewToken = await sessions.issueSessionToken({
       userId: reviewer,
       roles: ["reviewer"],
-      sessionId: randomUUID(),
+      sessionId: reviewerSession,
     });
   async function session(value: string) {
     await context.clearCookies();
@@ -71,6 +73,11 @@ test("artist upload → corrected passport → independent review → wallet sig
         display_name: "Browser fixture reviewer",
         onboarding_status: "completed",
       },
+    ]);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    await rest("auth_sessions", "POST", [
+      { id: ownerSession, user_id: owner, expires_at: expiresAt },
+      { id: reviewerSession, user_id: reviewer, expires_at: expiresAt },
     ]);
     await rest("user_roles", "POST", [
       { user_id: owner, role: "artist" },

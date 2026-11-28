@@ -33,11 +33,32 @@ export interface WalletRecord {
   readonly isPrimary: boolean;
 }
 
+export interface StudioChannelAccess {
+  readonly id: string;
+  readonly handle: string;
+  readonly displayName: string;
+  readonly role: "owner" | "editor";
+}
+
+export interface ReviewAssignmentAccess {
+  readonly id: string;
+  readonly channelId: string;
+  readonly createdAt: string;
+}
+
+export class WalletAlreadyBoundError extends Error {
+  constructor() {
+    super("Wallet is already bound to another Encore account");
+    this.name = "WalletAlreadyBoundError";
+  }
+}
+
 export interface AuthChallengeRecord {
   readonly message: string;
   readonly nonce: string;
   readonly address: string;
   readonly intendedAction: "login" | "link_wallet";
+  readonly messageDigest: string;
   readonly expiresAt: Date;
   readonly consumedAt: Date | null;
 }
