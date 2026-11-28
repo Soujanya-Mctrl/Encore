@@ -12,6 +12,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:security": "vitest run tests/security tests/queues",
     "test:contracts": "anchor test",
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",

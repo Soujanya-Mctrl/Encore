@@ -1,9 +1,11 @@
 # Encore — 48-Hour Development Plan & Live Progress Tracker
 
+> **Canonical planning source:** This file is the single source of truth for current status, scope, milestones and follow-on work. Other architecture and diagram documents describe design decisions or historical alternatives; they must not carry independent progress status.
+
 > **Start Timestamp:** `2026-11-26 21:20:58 +05:30` (H00:00)  
-> **Last Updated:** `2026-11-26 22:08:00 +05:30`  
-> **Elapsed Time:** `0h 47m` / `48h 00m` (`47h 13m` remaining)  
-> **Current Active Stage:** **Phase 2 (Database & Infrastructure)** *(Phase 0 & Phase 1 code/build complete; live Pollar/Supabase credentials pending)*  
+> **Last Updated:** `2026-11-28 11:24:00 +05:30`
+> **Tracking status:** The original H00–H48 clock is retained as a planning baseline; elapsed-hour values are no longer treated as live status.
+> **Current Active Stage:** **Phase 1, 2 & 8 (Auth, Database/PGMQ, Anchor & Expo Supporter Marketplace)** *(code & unit/security tests implemented; live Supabase/devnet deployment pending credentials & Anchor CLI)*
 > **Code Freeze Target:** `Hour 38` | **Submission Ready:** `Hour 43` | **Buffer:** `5 hours (H43–48)`
 
 ---
@@ -13,14 +15,14 @@
 | Phase | Window | Deliverables | Status | Elapsed / Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | **0. Feasibility & Setup** | `H0–2` | Sponsor API testing, monorepo setup, environment config, devnet/Pollar SDK spike | `Done` | Monorepo (`pnpm` + Turborepo), Pollar `0.12.0` `.d.ts` verified, `pnpm typecheck` & `pnpm test` green |
-| **1. Authentication & Onboarding** | `H2–5` | Pollar Auth, social login, wallet login, embedded wallets, user roles | `In Progress` | Contracts & `packages/core/identity` created; backend routes, PollarProvider & 4-screen UI next |
-| **2. Database & Infrastructure** | `H2–6` | Supabase migrations, storage, access control, PGMQ queues, Edge Functions | `In Progress` | PGMQ migrations & Edge Function stubs created; `202611270001_identity.sql` & infra repos next |
+| **1. Authentication & Onboarding** | `H2–5` | Pollar Auth, social login, wallet login, embedded wallets, user roles | `In Progress` | Identity contracts, core use cases, routes, provider, session service, UI and auth tests are present; live provider/database verification remains |
+| **2. Database & Infrastructure** | `H2–6` | Supabase migrations, storage, access control, PGMQ queues, Edge Functions | `In Progress` | PGMQ migrations, queue adapters, Edge Function stubs and infrastructure adapters are present; applying and verifying the identity migration remains |
 | **3. Artist Studio** | `H5–10` | Artist profiles, music uploads, creative disclosures, evidence submission | `Pending` | — |
 | **4. Provenance Engine** | `H5–12` | Music Passports, creation checkpoints, contribution graph, on-chain registry | `Pending` | — |
 | **5. Licensing & Rights Management** | `H10–14` | Rights verification, contributor consent, provider permissions, licensing records | `Pending` | — |
 | **6. Music Discovery & Player** | `H10–16` | Music playback, search, origin-based segregation, listener preferences | `Pending` | — |
 | **7. Artist Monetization** | `H12–20` | Direct support, USDC payments, provenance-bound settlement, earnings | `Pending` | — |
-| **8. Supporter Marketplace** | `H16–24` | Tradable supporter passes, listings, resale, revenue splits & redemption | `Pending` | — |
+| **8. Supporter Marketplace** | `H16–24` | Universal Expo (`apps/mobile`) UI + 3 payment paths (`Support`/`Trade`/`Fund`), Supporter Passes, campaign escrow + refunds, fixed-price `SpotListing` shares (1h candlestick UI), distribution claims & isolated Yes/No market | `In Planning` | Aligned with `encore-support-marketplace-architecture.html` & `encore-artist-first-marketplace.html` (`/plan` artifact ready for approval). Layer 2 remains devnet/demo-only (`SYNTHETIC DATA`) until legal/rights gates pass. |
 | **9. ElevenLabs Integration** | `H20–26` | Conversational music discovery, artist assistance, payment intent prep | `Pending` | — |
 | **10. Firecrawl Integration** | `H24–28` | Commercial opportunity discovery and artist matching | `Pending` | — |
 | **11. Creative Fairness & Moderation** | `H26–32` | Classification disputes, appeals, evidence corrections, artist notifications | `Pending` | — |
@@ -47,12 +49,13 @@
 ### Phase 1 & 2 Remaining (Current Focus)
 - [ ] Apply `supabase/migrations/202611270001_identity.sql` (`profiles`, `auth_identities`, `wallets`, `user_roles`, `user_preferences`, `auth_challenges` + RLS).
 - [ ] Implement `packages/infrastructure` identity adapters (`SupabaseUserRepository`, `InMemoryUserRepository`, `NodeEd25519Verifier`, `HmacSessionTokenService`, `PollarServerVerifier`).
-- [ ] Implement Next.js API routes under `apps/web/src/app/api/v1/auth/` (`siws/challenge`, `siws/verify`, `pollar/session`, `onboarding`, `me`, `logout`) + `server/request-context.ts`.
-- [ ] Implement `PollarProvider` client wrapper (`apps/web/src/providers/pollar-provider.tsx`), `/login`, `/onboarding` (4-screen flow), and protected `/studio` & `/admin` guards.
-- [ ] Run unit, integration, and Playwright auth tests + `pnpm build` + update `docs/integrations/POLLAR.md`, `docs/architecture/AUTHENTICATION.md`, `docs/architecture/adr/005-pollar-authentication.md`, `docs/security/ACCESS_CONTROL.md`, `docs/testing/AUTH_TEST_REPORT.md`.
+- [x] Implement Next.js API routes under `apps/web/src/app/api/v1/auth/` and `server/request-context.ts`.
+- [x] Implement the `PollarProvider` client wrapper, `/login`, `/onboarding`, and protected route surfaces.
+- [ ] Run and record the complete unit, integration, Playwright auth, typecheck and build verification; update the linked auth documentation with results.
 
 ### Phases 3–15 Remaining
 - [ ] **Phase 3–5:** Artist Studio, Provenance Engine (`PassportVersion` Anchor instructions), and Rights/Licensing gates.
-- [ ] **Phase 6–8:** Discovery & WaveSurfer player, Direct Tips (`direct_support`), and Supporter Pass Marketplace.
+- [ ] **Phase 6–8 (Expo + Marketplace):** Build `apps/mobile` (Universal Expo Router for Android + Expo Web), Discovery & player, Direct Tips (`direct_support` / Pollar `sendPayment`), Supporter Pass Marketplace, Campaign Escrow + Refunds, Fixed-Price `SpotListing` Project Shares (1h candlestick screen), and Distribution-Cycle Holder Claims.
+- [ ] **Opinion market:** Isolated Yes/No trading with a separate `1 test USDC`-backed prediction vault, earlier trading cutoff, immutable resolution and one-time winning claim. Keep it strictly separate from Supporter Passes, campaign escrow, and provenance status; devnet-only (`DEVNET / SYNTHETIC DATA`) until legal and market-integrity review.
 - [ ] **Phase 9–11:** ElevenLabs Voice Agent, Firecrawl Opportunity matching, and Moderation/Appeal workflow.
 - [ ] **Phase 12–15:** Adversarial/E2E/Anchor security tests, Vercel + Devnet deploy, final docs/pitch/video, and submission.

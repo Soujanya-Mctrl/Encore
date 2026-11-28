@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Encore",
+    "slug": "encore-mobile",
+    "version": "0.1.0",
+    "scheme": "encore",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "platforms": ["android", "web"],
+    "android": {
+      "package": "xyz.encore.music"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router"]
+  }
+}

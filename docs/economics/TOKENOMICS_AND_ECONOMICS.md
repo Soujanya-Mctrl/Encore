@@ -4,7 +4,8 @@
 
 ## 1. Economic Design Principles
 
-- **No Artist Memecoins or Speculative Yield:** Trading alone does not create external economic value. Encore rejects passive profit promises, royalty-share tokens, yield, futures, and AMMs in MVP.
+- **No Artist Memecoins or Speculative Yield:** Trading alone does not create external economic value. Encore rejects passive profit promises, yield, and AMMs in MVP.
+- **Layer 2 Devnet/Demo Scope Note:** Campaign escrow, fixed-price `SpotListing` project shares, distribution-cycle claims, and the isolated `1 test USDC` Yes/No opinion market (see [MARKETPLACE_ARCHITECTURE_REVIEW.md](../architecture/MARKETPLACE_ARCHITECTURE_REVIEW.md)) remain strictly **devnet/demo-only** with `SYNTHETIC DATA` disclosures until legal, rights, issuer, and accounting gates are passed.
 - **Origin-Neutral Payouts:** A creator receives the exact money a fan directs to them (less disclosed fees), regardless of whether the track is `HUMAN_CREATED`, `AI_ASSISTED`, `AI_GENERATED`, or `UNKNOWN`.
 - **No Protocol-Manufactured Proceeds:** All inflows equal outgoing transfers to the last smallest token unit (`conservation invariant`).
 

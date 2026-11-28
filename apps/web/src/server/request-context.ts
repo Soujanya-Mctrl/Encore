@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type { EncoreUser } from "@encore/core";
 import type { UserRole } from "@encore/contracts";
@@ -6,9 +6,22 @@ import { getServerContainer } from "./container";
 
 export const ENCORE_SESSION_COOKIE = "encore_session";
 
-export async function getAuthenticatedUser(): Promise<EncoreUser | null> {
+async function extractSessionToken(): Promise<string | null> {
+  // 1. Native Expo Android bearer token path
+  const headerStore = await headers();
+  const authHeader = headerStore.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const bearer = authHeader.slice(7).trim();
+    if (bearer.length > 0) return bearer;
+  }
+
+  // 2. Expo Web / Browser HttpOnly cookie path
   const cookieStore = await cookies();
-  const token = cookieStore.get(ENCORE_SESSION_COOKIE)?.value;
+  return cookieStore.get(ENCORE_SESSION_COOKIE)?.value ?? null;
+}
+
+export async function getAuthenticatedUser(): Promise<EncoreUser | null> {
+  const token = await extractSessionToken();
   if (!token) return null;
 
   const { sessions, users } = getServerContainer();

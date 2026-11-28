@@ -4,6 +4,10 @@
 
 > **Locked Architecture Decision:** **TypeScript Monorepo (`pnpm Workspaces + Turborepo`)** containing a **modular monolithic application** (`apps/web` + `packages/core` + `packages/infrastructure`), a **single modular Solana Anchor program** (`programs/encore`), and shared contracts/clients. No microservices, Kubernetes, Redis, or Kafka for the 48-hour MVP.
 
+> **Marketplace Architecture (Target Design):** Encore's marketplace combines two layers on Solana devnet, as illustrated in [`encore-support-marketplace-architecture.html`](../diagrams/architecture/encore-support-marketplace-architecture.html) and [`encore-artist-first-marketplace.html`](../diagrams/architecture/encore-artist-first-marketplace.html):
+> 1. **Layer 1 (Base Supporter Commerce):** Three payment paths (`Support` / `Trade` / `Fund`), version-bound `direct_support` (`SupportReceipt`), and finite `PassSeries`/`SupporterPass` primary purchase, fixed-price resale, and redemption.
+> 2. **Layer 2 (Project Financing, Spot Trading & Payouts — Devnet/Demo Scope):** Primary campaign escrow (`goal`, `deadline`, `vault`, individual `refund` path), fixed-price `SpotListing` project-share units (with 1-hour candlestick chart from indexed fills / labeled `SYNTHETIC DATA`), distribution-cycle holder claims, and an isolated `1 test USDC`-backed Yes/No opinion market. Legal, rights, issuer, and accounting gates apply before any real-money launch; see [MARKETPLACE_ARCHITECTURE_REVIEW.md](MARKETPLACE_ARCHITECTURE_REVIEW.md).
+
 ---
 
 ## 1. System Stack & Trust Boundaries
@@ -41,30 +45,22 @@ flowchart TD
 
 ```text
 encore/
-├── apps/web/src/
-│   ├── app/
-│   │   ├── (public)/          # page.tsx, about/, transparency/
-│   │   ├── (auth)/            # login/, register/, onboarding/
-│   │   ├── (platform)/        # discover/, search/, tracks/[trackId]/, artists/[artistId]/, library/, marketplace/, portfolio/, checkout/, settings/
-│   │   ├── (studio)/studio/   # dashboard/, releases/, create/, provenance/, licensing/, campaigns/, earnings/, opportunities/, disputes/
-│   │   ├── (admin)/admin/     # reviews/, disputes/, audit/
-│   │   └── api/v1/            # auth, artists, tracks, passports, evidence, rights, discover, support, passes, marketplace, receipts, disputes, agent, opportunities, webhooks, jobs, health
-│   ├── features/              # discovery, player, artist-profile, creator-studio, music-passport, evidence-upload, licensing, support, marketplace, portfolio, voice-agent, moderation, notifications
-│   ├── components/            # ui/, layout/, feedback/, shared/
-│   ├── providers/             # auth-provider, wallet-provider, query-provider, audio-provider
-│   ├── stores/                # player.store.ts, preferences.store.ts (Zustand)
-│   └── server/                # container.ts (composition root), request-context.ts, api-handler.ts
+├── apps/
+│   ├── mobile/                # Universal Expo Router app (Android + Expo Web): Discover, Marketplace, Checkout, Portfolio, Studio
+│   └── web/src/               # Next.js API & session boundary (/api/v1/*, same-origin proxy, PKCE handoff)
+│       ├── app/api/v1/        # auth, artists, tracks, passports, evidence, rights, discover, support, passes, marketplace, receipts, disputes, agent, opportunities, webhooks, jobs, health
+│       └── server/            # container.ts (composition root), request-context.ts, api-handler.ts
 ├── packages/
 │   ├── core/src/
 │   │   ├── modules/           # 13 business modules (identity, artists, catalog, provenance, rights, discovery, support, marketplace, settlement, moderation, voice-agent, opportunities, notifications)
-│   │   └── kernel/            # entity.ts, domain-event.ts, result.ts, errors.ts, clock.port.ts, unit-of-work.port.ts
-│   ├── infrastructure/src/    # persistence/supabase/, storage/, authentication/, cryptography/, integrations/{elevenlabs,pollar,firecrawl,music-providers}/, blockchain/{solana,transaction-indexer}/, jobs/, events/, observability/ (Pino)
-│   ├── contracts/src/         # api/, schemas/ (Zod), events/, enums/
+│   │   └── kernel/            # entity.ts, domain-event.ts, result.ts, errors.ts, clock.port.ts, unit-of-work.port.ts, queue.port.ts
+│   ├── infrastructure/src/    # persistence/supabase/, storage/, authentication/, cryptography/, integrations/{elevenlabs,pollar,firecrawl,music-providers}/, blockchain/{solana,transaction-indexer}/, queue/ (PGMQ), events/, observability/
+│   ├── contracts/src/         # api/, schemas/ (Zod), jobs/, auth/, marketplace/, events/, enums/
 │   ├── solana-client/src/     # generated/, pda/, instructions/, transactions/, accounts/, events/
 │   └── config/                # env/, eslint/, typescript/
-├── programs/encore/           # Anchor/Rust smart contract
-├── supabase/                  # migrations/ (13 SQL files), seed.sql, config.toml, tests/ (rls.test.sql, constraints.test.sql)
-├── tests/                     # integration/, contracts/, e2e/ (Playwright), security/, fixtures/, benchmarks/
+├── programs/encore/           # Single modular Anchor/Rust smart contract
+├── supabase/                  # migrations/ (identity, PGMQ 0013..0017, marketplace 202611280001+), functions/ (process-jobs), seed.sql, config.toml, tests/
+├── tests/                     # integration/, contracts/, queues/, e2e/, security/, fixtures/, benchmarks/
 ├── scripts/                   # bootstrap.ts, generate-types.ts, seed-demo.ts, reset-demo.ts, create-test-mint.ts, reconcile-payments.ts, verify-deployment.ts
 ├── docs/                      # Categorized wiki, specs, logs, diagrams
 └── .github/workflows/         # ci.yml, contract-tests.yml, security.yml, deploy-preview.yml, deploy-devnet.yml
@@ -103,7 +99,7 @@ Every substantial module in `packages/core/src/modules/<name>/` follows a strict
 
 ## 5. Database Architecture & Data Ownership
 
-13 incremental migrations (`202611270001_identity.sql` through `202611270013_outbox_jobs.sql`) include RLS policies in the same migration that creates each table.
+Incremental migrations (`202611270001_identity.sql`, PGMQ `202611270013..202611270017`, and domain/marketplace `202611280001+`) include RLS policies in the same migration that creates each table.
 
 | Data | Authoritative Source |
 | :--- | :--- |

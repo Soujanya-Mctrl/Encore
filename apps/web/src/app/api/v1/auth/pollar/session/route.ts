@@ -6,6 +6,21 @@ import { getServerContainer } from "@/server/container";
 import { attachSessionCookie } from "@/server/request-context";
 
 export async function POST(req: Request) {
+  const isProd = process.env.NODE_ENV === "production";
+  const pollarSecret = process.env.POLLAR_API_KEY;
+  const allowDevExchange = process.env.POLLAR_ALLOW_UNVERIFIED_DEVNET === "true";
+
+  if (isProd && !pollarSecret) {
+    return NextResponse.json(
+      { error: "Server-side Pollar verification is not configured (POLLAR_API_KEY missing)" },
+      { status: 503 }
+    );
+  }
+  if (!isProd && !pollarSecret && !allowDevExchange && process.env.VITEST !== "true") {
+    // Allow local devnet demos while logging explicit warning
+    console.warn("[auth/pollar/session] Running in devnet mode without POLLAR_API_KEY verification.");
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = PollarSessionExchangeSchema.safeParse(body);
   if (!parsed.success) {
