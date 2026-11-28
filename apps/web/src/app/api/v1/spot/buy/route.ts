@@ -14,12 +14,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid spot buy payload" }, { status: 400 });
   }
 
-  const { marketplace } = getServerContainer();
-  const result = await buySpotShareUnits(marketplace, {
+  const { users, marketplace, chain } = getServerContainer();
+  const wallets = await users.listWalletsForUser(auth.user.id);
+  const primaryWallet = wallets.find((w) => w.isPrimary) ?? wallets[0];
+  if (!primaryWallet) {
+    return NextResponse.json(
+      { error: "Connect or provision a Solana wallet before buying spot shares" },
+      { status: 400 }
+    );
+  }
+
+  const result = await buySpotShareUnits(marketplace, chain, {
     spotListingId: parsed.data.spotListingId,
     buyerUserId: auth.user.id,
+    buyerWallet: primaryWallet.address,
     units: parsed.data.units
   });
   if (!result.ok) return NextResponse.json({ error: result.error.message }, { status: 409 });
-  return NextResponse.json({ spotListing: result.value, demoOnly: true });
+  return NextResponse.json({ ...result.value, demoOnly: true });
 }

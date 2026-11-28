@@ -3,18 +3,22 @@ import {
   aggregateSpotCandles,
   approveAndFundDistributionCycle,
   assertPassportEligibleForCommerce,
+  buySpotShareUnits,
   cancelPassListing,
   cancelSpotListing,
+  claimDistributionPayout,
   computePrimaryPassSplit,
   computeProRataDistributionClaim,
   computeSecondaryResaleSplit,
   listOwnedPassForSale,
+  pledgeToCampaign,
   reconcileDistributionCycle,
   redeemSupporterPass,
   refundCampaign,
   tradeOpinionMarketPair
 } from "../index.js";
 import type {
+  MarketplaceChainPort,
   MarketplaceRepositoryPort,
   OpinionMarketEntity,
   PassSeriesEntity,
@@ -256,8 +260,35 @@ describe("Marketplace Integer Math & Invariants", () => {
       async saveDistributionApproval(a: any) {
         approvalState = a;
         return a;
+      },
+      async snapshotCycleHolders() {
+        return;
+      },
+      async getHolderShareUnitsAtRecordDate() {
+        return 25;
       }
     } as unknown as MarketplaceRepositoryPort;
+
+    const chain = {
+      async buildCampaignPledgeTx(p: any) {
+        return { instructionName: "pledge_campaign", serializedBase64: "tx-pledge", expectedSigners: [p.payerWallet], programId: "prog" };
+      },
+      async buildCampaignRefundTx(p: any) {
+        return { instructionName: "refund_campaign", serializedBase64: "tx-refund", expectedSigners: [p.claimerWallet], programId: "prog" };
+      },
+      async buildSpotBuyTx(p: any) {
+        return { instructionName: "buy_spot", serializedBase64: "tx-spot", expectedSigners: [p.buyerWallet], programId: "prog" };
+      },
+      async buildDistributionClaimTx(p: any) {
+        return { instructionName: "claim_distribution", serializedBase64: "tx-claim", expectedSigners: [p.claimerWallet], programId: "prog" };
+      },
+      async verifyFinalizedDeposit(p: any) {
+        if (p.signature === "bad-sig") {
+          return { verified: false, slot: 0, actualAmountSmallestUnits: "0", reason: "Not finalized" };
+        }
+        return { verified: true, slot: 123, actualAmountSmallestUnits: p.minimumAmountSmallestUnits };
+      }
+    } as unknown as MarketplaceChainPort;
 
     expect((await cancelPassListing(repo, { passId: "pass-2", userId: "other" })).ok).toBe(false);
     const cancelledPass = await cancelPassListing(repo, { passId: "pass-2", userId: "seller-1" });
@@ -267,10 +298,32 @@ describe("Marketplace Integer Math & Invariants", () => {
     const cancelledSpot = await cancelSpotListing(repo, { spotListingId: "spot-1", userId: "seller-1" });
     expect(cancelledSpot.ok && cancelledSpot.value.active === false).toBe(true);
 
-    const firstRefund = await refundCampaign(repo, { now: () => NOW }, { campaignId: "camp-1", userId: "backer-1" });
-    expect(firstRefund.ok && firstRefund.value.refundSmallestUnits === "25000000").toBe(true);
-    const secondRefund = await refundCampaign(repo, { now: () => NOW }, { campaignId: "camp-1", userId: "backer-1" });
-    expect(secondRefund.ok).toBe(false);
+    // Refund builds unsigned wallet tx instead of mutating DB only
+    const refundIntent = await refundCampaign(repo, chain, { now: () => NOW }, {
+      campaignId: "camp-1",
+      userId: "backer-1",
+      claimerWallet: "11111111111111111111111111111111"
+    });
+    expect(
+      refundIntent.ok &&
+        refundIntent.value.refundSmallestUnits === "25000000" &&
+        refundIntent.value.settlementStatus === "pending_signature" &&
+        refundIntent.value.unsignedTx.instructionName === "refund_campaign"
+    ).toBe(true);
+
+    // Spot buy builds unsigned wallet tx instead of mutating DB only
+    spotState.active = true;
+    const spotIntent = await buySpotShareUnits(repo, chain, {
+      spotListingId: "spot-1",
+      buyerUserId: "buyer-1",
+      buyerWallet: "11111111111111111111111111111111",
+      units: 4
+    });
+    expect(
+      spotIntent.ok &&
+        spotIntent.value.totalSmallestUnits === "4000000" &&
+        spotIntent.value.unsignedTx.instructionName === "buy_spot"
+    ).toBe(true);
 
     await reconcileDistributionCycle(repo, { now: () => NOW }, {
       cycleId: "cyc-1",
@@ -278,19 +331,49 @@ describe("Marketplace Integer Math & Invariants", () => {
       evidenceHash: HASH,
       verifiedRevenueSmallestUnits: "10000000"
     });
-    const sameApprover = await approveAndFundDistributionCycle(repo, { now: () => NOW }, {
+
+    // Claim rejected before cycle is funded and verified on-chain
+    const unfundedClaim = await claimDistributionPayout(repo, chain, {
+      cycleId: "cyc-1",
+      userId: "holder-1",
+      claimerWallet: "11111111111111111111111111111111"
+    });
+    expect(unfundedClaim.ok).toBe(false);
+
+    const sameApprover = await approveAndFundDistributionCycle(repo, chain, { now: () => NOW }, {
       cycleId: "cyc-1",
       approverUserId: "op-1",
       fundedTxSig: "sig-1"
     });
     expect(sameApprover.ok).toBe(false);
 
-    const distinctApprover = await approveAndFundDistributionCycle(repo, { now: () => NOW }, {
+    const unverifiedDeposit = await approveAndFundDistributionCycle(repo, chain, { now: () => NOW }, {
+      cycleId: "cyc-1",
+      approverUserId: "app-2",
+      fundedTxSig: "bad-sig"
+    });
+    expect(unverifiedDeposit.ok).toBe(false);
+
+    const distinctApprover = await approveAndFundDistributionCycle(repo, chain, { now: () => NOW }, {
       cycleId: "cyc-1",
       approverUserId: "app-2",
       fundedTxSig: "sig-1"
     });
     expect(distinctApprover.ok && distinctApprover.value.status === "FUNDED_AND_OPEN").toBe(true);
+
+    const claimIntent = await claimDistributionPayout(repo, chain, {
+      cycleId: "cyc-1",
+      userId: "holder-1",
+      claimerWallet: "11111111111111111111111111111111"
+    });
+    expect(
+      claimIntent.ok &&
+        claimIntent.value.payoutSmallestUnits === "2500000" &&
+        claimIntent.value.unsignedTx.instructionName === "claim_distribution"
+    ).toBe(true);
+
+    // Unused helper reference check
+    expect(typeof pledgeToCampaign).toBe("function");
 
     const ohlcv = aggregateSpotCandles([
       {

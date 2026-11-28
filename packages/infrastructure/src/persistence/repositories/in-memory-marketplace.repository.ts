@@ -66,6 +66,7 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   private readonly spotListings = new Map<string, SpotListingEntity>();
   private readonly spotFills: SpotFillEntity[] = [];
   private readonly shareBalances = new Map<string, number>();
+  private readonly cycleSnapshots = new Map<string, Map<string, number>>();
   private readonly cycles = new Map<string, DistributionCycleEntity>();
   private readonly distributionApprovals = new Map<string, DistributionApprovalEntity>();
   private readonly claimedCycles = new Set<string>();
@@ -298,6 +299,37 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepositoryPort 
   }
   async getHolderShareUnits(campaignId: string, userId: string) {
     return this.shareBalances.get(`${campaignId}:${userId}`) ?? 0;
+  }
+  async getHolderShareUnitsAtRecordDate(
+    cycleId: string,
+    campaignId: string,
+    userId: string,
+    recordDate: Date
+  ) {
+    const frozen = this.cycleSnapshots.get(cycleId);
+    if (frozen) {
+      return frozen.get(userId) ?? 0;
+    }
+    const cutoffMs = recordDate.getTime();
+    return this.spotFills
+      .filter((f) => f.campaignId === campaignId && f.filledAt.getTime() <= cutoffMs)
+      .reduce((acc, f) => {
+        if (f.buyerUserId === userId) return acc + f.units;
+        if (f.sellerUserId === userId) return Math.max(0, acc - f.units);
+        return acc;
+      }, 0);
+  }
+  async snapshotCycleHolders(cycleId: string, campaignId: string, recordDate: Date) {
+    const cutoffMs = recordDate.getTime();
+    const map = new Map<string, number>();
+    for (const f of this.spotFills) {
+      if (f.campaignId !== campaignId || f.filledAt.getTime() > cutoffMs) continue;
+      map.set(f.buyerUserId, (map.get(f.buyerUserId) ?? 0) + f.units);
+      if (map.has(f.sellerUserId)) {
+        map.set(f.sellerUserId, Math.max(0, (map.get(f.sellerUserId) ?? 0) - f.units));
+      }
+    }
+    this.cycleSnapshots.set(cycleId, map);
   }
   async markDistributionClaimed(cycleId: string, userId: string, amount: string) {
     const key = `${cycleId}:${userId}`;
