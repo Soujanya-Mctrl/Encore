@@ -88,7 +88,7 @@ FR03 Review and appeal: reviewer can corroborate evidence, flag inconsistency or
 
 FR04 Discover and playback: catalog cards display category and evidence separately before checkout; filters include all/three categories/unknown, genre; authorized audio or link-out; accessible player and visible disclosures. Acceptance: filters return correct fixtures, no unapproved audio bytes served.
 
-FR05 Voice discovery: one ElevenLabs agent calls read-only search/manifest functions and prepares an unsigned support intent; UI shows selected artist, amount, exact disclosure and fees. Acceptance: voice prompt cannot authorize spending or fabricate verified status; user signs separately.
+FR05 Voice discovery & Studio music generation: (a) one ElevenLabs agent calls read-only search/manifest functions and prepares an unsigned support intent; UI shows selected artist, amount, exact disclosure and fees. Acceptance: voice prompt cannot authorize spending or fabricate verified status; user signs separately. (b) Artist Studio supports creator-initiated music generation via ElevenLabs Music API (server-side key), storing the generation receipt as `CORROBORATED` evidence with `AI_GENERATED` (or `AI_ASSISTED` when combined with human stems) origin and plan-appropriate `RightsStatus`, without reselling ElevenLabs marketplace licenses.
 
 FR06 Direct support: explicit signed test-USDC transfer through the program, exact recipient and selected passport version; confirmation and transaction explorer link. Acceptance: amount, recipient and mint validated, duplicate intent rejected, chain-confirmed receipt visible to artist and fan.
 

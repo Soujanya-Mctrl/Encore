@@ -104,6 +104,51 @@ export interface CandlePoint {
   readonly close: number;
 }
 
+export interface SpotFillEntity {
+  readonly id: string;
+  readonly spotListingId: string;
+  readonly campaignId: string;
+  readonly buyerUserId: string;
+  readonly sellerUserId: string;
+  readonly units: number;
+  readonly unitPriceSmallestUnits: string;
+  readonly txSignature: string;
+  readonly filledAt: Date;
+}
+
+export interface CampaignReviewEntity {
+  readonly id: string;
+  readonly campaignId: string;
+  readonly reviewerUserId: string;
+  readonly decision: "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+  readonly notes: string;
+  readonly termsHash: string | null;
+  readonly createdAt: Date;
+}
+
+export interface CampaignMilestoneEntity {
+  readonly id: string;
+  readonly campaignId: string;
+  readonly sequenceIndex: number;
+  readonly title: string;
+  readonly releaseAmountSmallestUnits: string;
+  readonly evidenceUri: string | null;
+  readonly status: "PENDING" | "SUBMITTED" | "APPROVED" | "RELEASED" | "REJECTED";
+  readonly reviewerUserId: string | null;
+  readonly updatedAt: Date;
+}
+
+export interface DistributionApprovalEntity {
+  readonly cycleId: string;
+  readonly operatorUserId: string;
+  readonly approverUserId: string | null;
+  readonly evidenceHash: string;
+  readonly reconciledAt: Date;
+  readonly approvedAt: Date | null;
+  readonly fundedTxSig: string | null;
+  readonly status: "RECONCILED" | "FUNDED_AND_OPEN";
+}
+
 export interface MarketplaceSnapshot {
   readonly tracks: TrackPassportSummary[];
   readonly series: PassSeriesEntity[];
@@ -113,4 +158,5 @@ export interface MarketplaceSnapshot {
   readonly distributionCycles: DistributionCycleEntity[];
   readonly opinionMarkets: OpinionMarketEntity[];
   readonly candles: CandlePoint[];
+  readonly candlesLastUpdatedAt: string | null;
 }

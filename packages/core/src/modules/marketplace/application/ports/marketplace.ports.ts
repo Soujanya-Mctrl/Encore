@@ -1,10 +1,14 @@
 import type { TrackPassportSummary } from "@encore/contracts";
 import type {
   CampaignEntity,
+  CampaignMilestoneEntity,
+  CampaignReviewEntity,
+  DistributionApprovalEntity,
   DistributionCycleEntity,
   MarketplaceSnapshot,
   OpinionMarketEntity,
   PassSeriesEntity,
+  SpotFillEntity,
   SpotListingEntity,
   SupportReceiptEntity,
   SupporterPassEntity
@@ -73,14 +77,22 @@ export interface MarketplaceRepositoryPort {
   getCampaignPledgeAmount(campaignId: string, userId: string): Promise<string>;
   markCampaignRefundClaimed(campaignId: string, userId: string): Promise<boolean>;
   getSpotListingById(spotListingId: string): Promise<SpotListingEntity | null>;
+  saveSpotListing(listing: SpotListingEntity): Promise<SpotListingEntity>;
   fillSpotListing(params: {
     spotListingId: string;
     buyerUserId: string;
     units: number;
   }): Promise<SpotListingEntity>;
+  listSpotFills(campaignId?: string): Promise<SpotFillEntity[]>;
   getDistributionCycleById(cycleId: string): Promise<DistributionCycleEntity | null>;
+  saveDistributionCycle(cycle: DistributionCycleEntity): Promise<DistributionCycleEntity>;
+  getDistributionApproval(cycleId: string): Promise<DistributionApprovalEntity | null>;
+  saveDistributionApproval(approval: DistributionApprovalEntity): Promise<DistributionApprovalEntity>;
   getHolderShareUnits(campaignId: string, userId: string): Promise<number>;
   markDistributionClaimed(cycleId: string, userId: string, amount: string): Promise<boolean>;
+  recordCampaignReview(review: CampaignReviewEntity): Promise<CampaignReviewEntity>;
+  getMilestoneById(milestoneId: string): Promise<CampaignMilestoneEntity | null>;
+  saveMilestone(milestone: CampaignMilestoneEntity): Promise<CampaignMilestoneEntity>;
   getOpinionMarketById(marketId: string): Promise<OpinionMarketEntity | null>;
   recordOpinionTrade(params: {
     marketId: string;

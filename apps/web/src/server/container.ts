@@ -24,7 +24,8 @@ import {
   PgmqAdapter,
   PollarSessionVerifier,
   SolanaMarketplaceChainAdapter,
-  SupabaseIdentityRepository
+  SupabaseIdentityRepository,
+  SupabaseMarketplaceRepository
 } from "@encore/infrastructure";
 import { getBrowserAuthOrigin } from "./browser-auth-request";
 
@@ -89,7 +90,9 @@ export function getServerContainer(): ServerContainer {
       ? new SupabasePkceCodes(supabaseIdentity.url, supabaseIdentity.key)
       : new InMemoryPkceCodes(),
     sessions: new HmacSessionTokenService(sessionSecret),
-    marketplace: new InMemoryMarketplaceRepository(),
+    marketplace: supabaseUrl && serviceRoleKey
+      ? new SupabaseMarketplaceRepository(supabaseUrl, serviceRoleKey)
+      : new InMemoryMarketplaceRepository(),
     chain: new SolanaMarketplaceChainAdapter(process.env.NEXT_PUBLIC_ENCORE_PROGRAM_ID),
     queue: new PgmqAdapter(supabaseUrl, serviceRoleKey),
     clock: { now: () => new Date() },

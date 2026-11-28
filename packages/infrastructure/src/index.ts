@@ -6,6 +6,7 @@ export * from "./authentication/pollar-session-verifier.js";
 export * from "./persistence/repositories/in-memory-identity.repository.js";
 export * from "./persistence/repositories/supabase-identity.repository.js";
 export * from "./persistence/repositories/in-memory-marketplace.repository.js";
+export * from "./persistence/repositories/supabase-marketplace.repository.js";
 export * from "./blockchain/solana/solana-marketplace.adapter.js";
 export * from "./queue/pgmq.adapter.js";
 export * from "./queue/queue-names.js";
