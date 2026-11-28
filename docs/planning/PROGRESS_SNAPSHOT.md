@@ -1,5 +1,7 @@
 # Project progress snapshot — 28 November 2026
 
+This historical snapshot uses the original PDF's phase numbering. The [current development roadmap](../../plan.md) uses the agreed 0–14 sequence.
+
 These are rounded engineering estimates of each phase’s deliverables, not measured time, code coverage or acceptance-gate pass rates. Scaffolding receives limited credit. Shared foundation code does not establish completed end-to-end features. The current work is in Phase 2. The progress ranges are estimates and the phase gate remains open for the three demo tracks and web staging.
 
 ElevenLabs: account, agent list, existing Encore agent and signed-session authorization all passed (HTTP 200). The unique Encore agent ID was linked in ignored local env. No live voice/audio or read-only tool execution was run. Credentials are verified; the entire voice feature is not yet verified. Sanitized evidence is in [the live results](../testing/PHASE_ONE_LIVE_RESULTS.json).

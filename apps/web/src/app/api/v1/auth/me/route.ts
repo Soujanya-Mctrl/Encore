@@ -1,14 +1,14 @@
-import { authJson } from "@/server/browser-auth-request";
+import { authJson, authUnavailable } from "@/server/browser-auth-request";
 import { getServerContainer } from "@/server/container";
-import { getAuthenticatedUser } from "@/server/request-context";
+import { requireAuthenticatedUser } from "@/server/request-context";
 
-export async function GET() {
-  const user = await getAuthenticatedUser();
-  if (!user) {
-    return authJson({ error: "Unauthenticated" }, 401);
+export async function GET(req: Request) {
+  const auth = await requireAuthenticatedUser(undefined, req);
+  if (auth.errorResponse) return auth.errorResponse;
+  try {
+    const wallets = await getServerContainer().users.listWalletsForUser(auth.user.id);
+    return authJson({ user: auth.user, wallets });
+  } catch {
+    return authUnavailable();
   }
-
-  const { users } = getServerContainer();
-  const wallets = await users.listWalletsForUser(user.id);
-  return authJson({ user, wallets });
 }

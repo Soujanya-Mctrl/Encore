@@ -14,3 +14,7 @@ major_version = 15
 [storage]
 enabled = true
 file_size_limit = "50MiB"
+
+# Cron uses JOB_RUNNER_SECRET rather than a Supabase user JWT.
+[functions.process-jobs]
+verify_jwt = false

@@ -1,42 +1,35 @@
-import crypto from "node:crypto";
-import { NextResponse } from "next/server";
-import { z } from "zod";
-import { requireAuthenticatedUser } from "@/server/request-context";
-import { pkceStore } from "@/server/pkce-store";
-
-const PkceCodeRequestSchema = z.object({
-  codeChallenge: z.string().min(43).max(128),
-  redirectUri: z.string().url()
-});
+import { randomBytes } from "node:crypto";
+import { PkceCodeRequestSchema } from "@encore/contracts";
+import { authJson, authUnavailable, guardBrowserAuthWrite } from "@/server/browser-auth-request";
+import { getServerContainer } from "@/server/container";
+import { hashCode, permitsNativeRedirect, PKCE_TTL_SECONDS } from "@/server/pkce";
+import { getAuthenticatedSession } from "@/server/request-context";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthenticatedUser();
-  if (auth.errorResponse) return auth.errorResponse;
+  const blocked = guardBrowserAuthWrite(req);
+  if (blocked) return blocked;
 
-  const body = await req.json().catch(() => null);
-  const parsed = PkceCodeRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid PKCE code request" }, { status: 400 });
+  const parsed = PkceCodeRequestSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success || !permitsNativeRedirect(parsed.data.redirectUri)) {
+    return authJson({ error: "Invalid PKCE authorization request" }, 400);
   }
 
-  // Validate allowed Expo redirect schemes
-  const allowedPrefixes = [
-    "encore://",
-    "exp://",
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  ];
-  if (!allowedPrefixes.some((p) => parsed.data.redirectUri.startsWith(p))) {
-    return NextResponse.json({ error: "Disallowed redirectUri" }, { status: 400 });
+  try {
+    const auth = await getAuthenticatedSession();
+    if (!auth) return authJson({ error: "Authentication required" }, 401);
+
+    const { clock, pkceCodes } = getServerContainer();
+    const code = randomBytes(24).toString("base64url");
+    await pkceCodes.create({
+      codeHash: hashCode(code),
+      userId: auth.user.id,
+      sourceSessionId: auth.sessionId,
+      codeChallenge: parsed.data.codeChallenge,
+      redirectUri: parsed.data.redirectUri,
+      expiresAt: new Date(clock.now().getTime() + PKCE_TTL_SECONDS * 1000)
+    });
+    return authJson({ code, expiresInSeconds: PKCE_TTL_SECONDS });
+  } catch {
+    return authUnavailable();
   }
-
-  const code = crypto.randomBytes(24).toString("base64url");
-  pkceStore.set(code, {
-    userId: auth.user.id,
-    roles: auth.user.roles,
-    codeChallenge: parsed.data.codeChallenge,
-    redirectUri: parsed.data.redirectUri,
-    expiresAt: Date.now() + 120_000 // 2-minute single-use TTL
-  });
-
-  return NextResponse.json({ code, expiresInSeconds: 120 });
 }

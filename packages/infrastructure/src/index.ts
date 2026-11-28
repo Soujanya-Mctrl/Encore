@@ -1,4 +1,5 @@
 export * from "./authentication/active-sessions.repository.js";
+export * from "./authentication/pkce-codes.repository.js";
 export * from "./authentication/hmac-session.service.js";
 export * from "./authentication/ed25519-verifier.js";
 export * from "./authentication/pollar-session-verifier.js";

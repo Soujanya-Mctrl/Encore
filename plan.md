@@ -1,19 +1,23 @@
-# Encore — Development Progress (PDF Phase Numbering)
+# Encore development phases
 
-The PDF's Section 12 is the authoritative phase sequence. The earlier 0–15 task breakdown is superseded by this mapping; authentication and database tasks belong to the initial setup/registry work rather than separate numbered PDF phases.
+This roadmap follows the 0–14 phase sequence agreed for the current build. The [PDF progress snapshot](docs/planning/PROGRESS_SNAPSHOT.md) records earlier work using the original build playbook's numbering.
 
-| PDF phase | Window | State |
+| Phase | Status | Acceptance work |
 | --- | --- | --- |
-| 1. Feasibility and setup | H00–02 | ~85%: engineering and ElevenLabs credentials/session access verified; live voice/tool and other gate checks pending |
-| 2. Registry, catalog and first deployment | H02–10 | ~85%: registry, private uploads, Passport history and searchable catalog verified. Three demo tracks and web staging pending. |
-| 3. Economic lifecycle | H10–20 | Pending |
-| 4. Voice, rights and opportunities | H20–30 | Pending; integration scaffolding only |
-| 5. Integration and code freeze | H30–38 | Pending |
-| 6. Documentation and submission | H38–43 | Pending |
-| 7. Buffer | H43–48 | Pending |
+| 0. Feasibility & Setup | Complete | Toolchain, credentials, and Solana devnet setup. |
+| 1. Authentication & Onboarding | Wallet path verified locally | Browser and Expo API sessions, revocation, and listener/artist onboarding verified. The hosted schema and live Pollar email, social, and embedded-wallet paths still need verification. |
+| 2. Database & Infrastructure | Database and worker verified locally | Schema, access controls, private storage policy, real PGMQ delivery, retries, and dead-letter handling verified. Hosted migration and worker activation remain pending. |
+| 3. Artist Studio | Next | Prior registry and upload work is available. Complete the contributor and creator dashboard workflows. |
+| 4. Provenance Engine | Partial | The devnet registry and Music Passport history exist. Complete creation checkpoints, the contribution graph, and their publication workflow. |
+| 5. Licensing & Rights Management | Pending | Permission checks, provider restrictions, and rights documentation. |
+| 6. Music Discovery & Player | Partial | Catalog search and signed playback exist. Complete demo tracks, filters, and player state. |
+| 7. Artist Monetization | Pending | Passport-bound settlement and reconciliation. |
+| 8. Supporter Marketplace | Pending | Primary purchase, transfer, resale splits, and redemption. |
+| 9. ElevenLabs Integration | Pending | API feasibility was verified. Complete catalog-aware voice tools and supervised payment intents. |
+| 10. Firecrawl Integration | Pending | API feasibility was verified. Complete extraction, processing, and opportunity matching. |
+| 11. Creative Fairness & Moderation | Pending | Evidence reviews, corrections, appeals, and notifications. |
+| 12. Integration & Security Testing | Partial | Scoped workflow and queue checks exist. Complete cross-module, contract, and full-product end-to-end testing. |
+| 13. Deployment & UI Polish | Pending | The devnet program is recorded. The project owner handles web staging. |
+| 14. Documentation & Submission | Partial | Project and architecture docs exist. Complete the final demo, pitch, and submission. |
 
-Hours are planned elapsed build windows, not an automatically updated countdown or proof of completion.
-
-## Current work
-
-Phase 2 remains active. The upload-to-catalog flow passed with disposable audio, including a finalized Solana Passport. The three authorized demo files and metadata are needed to seed the categories. The project owner handles web staging. See the [Phase 2 handoff](docs/planning/PHASE_TWO_REPORT.md), [deployment history](docs/architecture/DEVNET_DEPLOYMENTS.md), and [phase progress snapshot](docs/planning/PROGRESS_SNAPSHOT.md).
+See the [Expo authentication and database handoff](docs/setup/EXPO_AUTH_AND_DATABASE.md) for the client API and acceptance checks, and the [devnet deployment log](docs/architecture/DEVNET_DEPLOYMENTS.md) for recorded program addresses.

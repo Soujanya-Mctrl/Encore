@@ -5,6 +5,7 @@ import type {
   ExternalIdentityVerifierPort,
   MarketplaceChainPort,
   MarketplaceRepositoryPort,
+  PkceCodeRepositoryPort,
   QueuePort,
   SessionTokenPort,
   SignatureVerifierPort,
@@ -13,6 +14,8 @@ import type {
 import {
   HmacSessionTokenService,
   InMemoryActiveSessions,
+  InMemoryPkceCodes,
+  SupabasePkceCodes,
   SupabaseActiveSessions,
   type ActiveSessions,
   InMemoryIdentityRepository,
@@ -23,6 +26,7 @@ import {
   SolanaMarketplaceChainAdapter,
   SupabaseIdentityRepository
 } from "@encore/infrastructure";
+import { getBrowserAuthOrigin } from "./browser-auth-request";
 
 export interface ServerContainer {
   readonly cluster: string;
@@ -30,6 +34,7 @@ export interface ServerContainer {
   readonly challenges: ChallengeRepositoryPort;
   readonly verifier: SignatureVerifierPort;
   readonly activeSessions: ActiveSessions;
+  readonly pkceCodes: PkceCodeRepositoryPort;
   readonly sessions: SessionTokenPort;
   readonly marketplace: MarketplaceRepositoryPort;
   readonly chain: MarketplaceChainPort;
@@ -50,44 +55,46 @@ export function getServerContainer(): ServerContainer {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   const configuredSessionSecret = process.env.ENCORE_SESSION_SECRET?.trim();
+  const production = process.env.NODE_ENV === "production";
   if (
-    process.env.NODE_ENV === "production" &&
+    production &&
     (!configuredSessionSecret || configuredSessionSecret.length < 32)
   ) {
     throw new Error("ENCORE_SESSION_SECRET must be at least 32 characters in production");
   }
   const sessionSecret = configuredSessionSecret || randomBytes(32).toString("base64url");
 
-  let repo: UserRepositoryPort & ChallengeRepositoryPort;
-  if (process.env.NODE_ENV === "production" && (!supabaseUrl || !serviceRoleKey)) {
-    throw new Error("Persistent identity and session storage is required in production");
-  }
-  let activeSessions: ActiveSessions;
-  if (supabaseUrl && serviceRoleKey) {
-    repo = new SupabaseIdentityRepository(supabaseUrl, serviceRoleKey);
-    activeSessions = new SupabaseActiveSessions(supabaseUrl, serviceRoleKey);
-  } else {
-    repo = new InMemoryIdentityRepository();
-    activeSessions = new InMemoryActiveSessions();
+  const identityStore = process.env.ENCORE_IDENTITY_STORE;
+  const supabaseIdentity = identityStore !== "memory" && supabaseUrl && serviceRoleKey
+    ? { url: supabaseUrl, key: serviceRoleKey }
+    : null;
+  if ((production || identityStore === "supabase") && !supabaseIdentity) {
+    throw new Error("Persistent identity and session storage requires Supabase credentials");
   }
 
+  const repo = supabaseIdentity
+    ? new SupabaseIdentityRepository(supabaseIdentity.url, supabaseIdentity.key)
+    : new InMemoryIdentityRepository();
+  const pollarKey = process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY;
+  const authOrigin = getBrowserAuthOrigin();
   const container: ServerContainer = {
     cluster: process.env.NEXT_PUBLIC_SOLANA_CLUSTER ?? "devnet",
     users: repo,
     challenges: repo,
     verifier: new NodeEd25519Verifier(),
-    activeSessions,
+    activeSessions: supabaseIdentity
+      ? new SupabaseActiveSessions(supabaseIdentity.url, supabaseIdentity.key)
+      : new InMemoryActiveSessions(),
+    pkceCodes: supabaseIdentity
+      ? new SupabasePkceCodes(supabaseIdentity.url, supabaseIdentity.key)
+      : new InMemoryPkceCodes(),
     sessions: new HmacSessionTokenService(sessionSecret),
     marketplace: new InMemoryMarketplaceRepository(),
     chain: new SolanaMarketplaceChainAdapter(process.env.NEXT_PUBLIC_ENCORE_PROGRAM_ID),
     queue: new PgmqAdapter(supabaseUrl, serviceRoleKey),
     clock: { now: () => new Date() },
-    externalIdentity: process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY
-      ? new PollarSessionVerifier(
-          process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY,
-          fetch,
-          new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").origin
-        )
+    externalIdentity: pollarKey && authOrigin
+      ? new PollarSessionVerifier(pollarKey, fetch, authOrigin)
       : null
   };
 
