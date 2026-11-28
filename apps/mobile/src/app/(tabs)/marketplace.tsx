@@ -23,8 +23,12 @@ export default function MarketplaceScreen() {
         and Demo Project Shares. Non-investment entitlements.
       </Text>
 
-      {data?.candles && (
-        <CandlestickChart title="Midnight Sessions EP" candles={data.candles} />
+      {data && (
+        <CandlestickChart
+          title="Midnight Sessions EP"
+          candles={data.candles}
+          lastUpdatedAt={data.candlesLastUpdatedAt}
+        />
       )}
 
       <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginTop: 20 }}>
@@ -97,28 +101,32 @@ export default function MarketplaceScreen() {
         </View>
       ))}
 
-      <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginTop: 20 }}>
-        Isolated Yes/No Prediction Vault (1 test USDC / Pair)
-      </Text>
-      {data?.opinionMarkets.map((m) => (
-        <View
-          key={m.id}
-          style={{
-            backgroundColor: "#1B1E30",
-            borderRadius: 12,
-            padding: 14,
-            marginTop: 8,
-            marginBottom: 24,
-            borderWidth: 1,
-            borderColor: "#2B304A"
-          }}
-        >
-          <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>{m.question}</Text>
-          <Text style={{ color: "#A99BFF", fontSize: 12, marginTop: 6 }}>
-            YES pairs: {m.yesPoolPairs} · NO pairs: {m.noPoolPairs} · Outcome: {m.resolvedOutcome}
+      {process.env.EXPO_PUBLIC_ENABLE_OPINION_MARKET === "true" && (
+        <>
+          <Text style={{ color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginTop: 20 }}>
+            Isolated Yes/No Prediction Vault (1 test USDC / Pair)
           </Text>
-        </View>
-      ))}
+          {data?.opinionMarkets.map((m) => (
+            <View
+              key={m.id}
+              style={{
+                backgroundColor: "#1B1E30",
+                borderRadius: 12,
+                padding: 14,
+                marginTop: 8,
+                marginBottom: 24,
+                borderWidth: 1,
+                borderColor: "#2B304A"
+              }}
+            >
+              <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>{m.question}</Text>
+              <Text style={{ color: "#A99BFF", fontSize: 12, marginTop: 6 }}>
+                YES pairs: {m.yesPoolPairs} · NO pairs: {m.noPoolPairs} · Outcome: {m.resolvedOutcome}
+              </Text>
+            </View>
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }
