@@ -71,6 +71,7 @@ export interface SpotListingEntity {
   readonly sellerWallet: string;
   readonly remainingUnits: number;
   readonly unitPriceSmallestUnits: string;
+  readonly nonce?: number;
   readonly active: boolean;
 }
 

@@ -16,4 +16,16 @@ pub enum EncoreError {
     Unauthorized,
     #[msg("Invalid amount or zero price")]
     InvalidAmount,
+    #[msg("Campaign is not funded")]
+    CampaignNotFunded,
+    #[msg("Campaign deadline has not passed or goal was met")]
+    CampaignStillActive,
+    #[msg("Campaign pledge refund already claimed")]
+    RefundAlreadyClaimed,
+    #[msg("Invalid distribution Merkle proof")]
+    InvalidMerkleProof,
+    #[msg("Distribution cycle is closed or exhausted")]
+    DistributionClosed,
+    #[msg("Spot listing is inactive or lacks requested units")]
+    SpotListingInactive,
 }

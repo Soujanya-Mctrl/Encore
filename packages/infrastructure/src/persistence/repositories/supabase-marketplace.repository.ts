@@ -27,43 +27,72 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
   }
 
   async getMarketplaceSnapshot(): Promise<MarketplaceSnapshot> {
-    const [tracksRes, seriesRes, listedRes, campaignsRes, spotRes, cyclesRes, marketsRes, fills] =
-      await Promise.all([
-        this.client.from("tracks").select("*, manifest_versions(*)").eq("publish_state", "published"),
-        this.client.from("series").select("*"),
-        this.client.from("passes").select("*").eq("status", "LISTED"),
-        this.client.from("campaigns").select("*"),
-        this.client.from("spot_listings").select("*").eq("active", true),
-        this.client.from("distribution_cycles").select("*"),
-        this.client.from("opinion_markets").select("*"),
-        this.listSpotFills()
-      ]);
+    const [
+      tracksRes,
+      releasesRes,
+      seriesRes,
+      listedRes,
+      campaignsRes,
+      spotRes,
+      cyclesRes,
+      marketsRes,
+      fills
+    ] = await Promise.all([
+      this.client.from("tracks").select("*, manifest_versions(*)").eq("publish_state", "published"),
+      this.client.from("catalog_releases").select("*").eq("status", "published"),
+      this.client.from("series").select("*"),
+      this.client.from("passes").select("*").eq("status", "LISTED"),
+      this.client.from("campaigns").select("*"),
+      this.client.from("spot_listings").select("*").eq("active", true),
+      this.client.from("distribution_cycles").select("*"),
+      this.client.from("opinion_markets").select("*"),
+      this.listSpotFills()
+    ]);
 
-    const tracks: TrackPassportSummary[] = (tracksRes.data ?? []).map((t: any) => {
-      const versions = Array.isArray(t.manifest_versions) ? t.manifest_versions : [];
-      const current = versions.find((v: any) => v.version === t.current_version) ?? versions[0];
-      return {
-        trackId: t.id,
-        title: t.title,
-        artistName: t.artist_name ?? "Artist",
-        artistWallet: t.artist_wallet ?? "11111111111111111111111111111111",
-        currentVersion: t.current_version,
+    const userIds = [
+      ...(tracksRes.data ?? []).map((t: any) => t.artist_user_id),
+      ...(releasesRes.data ?? []).map((r: any) => r.artist_id),
+      ...(seriesRes.data ?? []).map((s: any) => s.artist_user_id),
+      ...(campaignsRes.data ?? []).map((c: any) => c.artist_user_id),
+      ...(spotRes.data ?? []).map((s: any) => s.seller_user_id)
+    ].filter((id): id is string => typeof id === "string" && id.length > 0);
+    const walletByUser = await this.resolveWallets(userIds);
+
+    const tracksById = new Map<string, TrackPassportSummary>();
+    for (const t of tracksRes.data ?? []) {
+      const versions = Array.isArray((t as any).manifest_versions) ? (t as any).manifest_versions : [];
+      const current = versions.find((v: any) => v.version === (t as any).current_version) ?? versions[0];
+      tracksById.set((t as any).id, {
+        trackId: (t as any).id,
+        title: (t as any).title,
+        artistName: (t as any).artist_name ?? "Artist",
+        artistWallet:
+          (t as any).artist_wallet ??
+          walletByUser.get((t as any).artist_user_id) ??
+          "11111111111111111111111111111111",
+        currentVersion: (t as any).current_version,
         manifestHash: current?.hash ?? "0".repeat(64),
-        paused: Boolean(t.paused),
+        paused: Boolean((t as any).paused),
         originCategory: current?.origin_claim ?? "UNKNOWN",
         evidenceStatus: current?.evidence_status ?? "UNVERIFIED",
         rightsStatus: current?.rights_state ?? "RESTRICTED"
-      };
-    });
+      });
+    }
+
+    for (const rel of releasesRes.data ?? []) {
+      if (tracksById.has((rel as any).id)) continue;
+      const mapped = this.mapCatalogReleaseToPassport(rel, walletByUser);
+      if (mapped) tracksById.set(mapped.trackId, mapped);
+    }
 
     const { candles, lastUpdatedAt } = aggregateSpotCandles(fills);
 
     return {
-      tracks,
-      series: (seriesRes.data ?? []).map(this.mapSeries),
+      tracks: Array.from(tracksById.values()),
+      series: (seriesRes.data ?? []).map((row: any) => this.mapSeries(row, walletByUser)),
       listedPasses: (listedRes.data ?? []).map(this.mapPass),
-      campaigns: (campaignsRes.data ?? []).map(this.mapCampaign),
-      spotListings: (spotRes.data ?? []).map(this.mapSpotListing),
+      campaigns: (campaignsRes.data ?? []).map((row: any) => this.mapCampaign(row, walletByUser)),
+      spotListings: (spotRes.data ?? []).map((row: any) => this.mapSpotListing(row, walletByUser)),
       distributionCycles: (cyclesRes.data ?? []).map(this.mapCycle),
       opinionMarkets: (marketsRes.data ?? []).map(this.mapMarket),
       candles,
@@ -77,27 +106,47 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
       .select("*, manifest_versions(*)")
       .eq("id", trackId)
       .maybeSingle();
-    if (!data) return null;
-    const versions = Array.isArray(data.manifest_versions) ? data.manifest_versions : [];
-    const current = versions.find((v: any) => v.version === data.current_version) ?? versions[0];
-    if (!current) return null;
-    return {
-      trackId: data.id,
-      title: data.title,
-      artistName: data.artist_name ?? "Artist",
-      artistWallet: data.artist_wallet ?? "11111111111111111111111111111111",
-      currentVersion: data.current_version,
-      manifestHash: current.hash,
-      paused: Boolean(data.paused),
-      originCategory: current.origin_claim,
-      evidenceStatus: current.evidence_status,
-      rightsStatus: current.rights_state
-    };
+    if (data) {
+      const versions = Array.isArray(data.manifest_versions) ? data.manifest_versions : [];
+      const current = versions.find((v: any) => v.version === data.current_version) ?? versions[0];
+      if (!current) return null;
+      const wallets = data.artist_user_id
+        ? await this.resolveWallets([data.artist_user_id])
+        : new Map<string, string>();
+      return {
+        trackId: data.id,
+        title: data.title,
+        artistName: data.artist_name ?? "Artist",
+        artistWallet:
+          data.artist_wallet ??
+          wallets.get(data.artist_user_id) ??
+          "11111111111111111111111111111111",
+        currentVersion: data.current_version,
+        manifestHash: current.hash,
+        paused: Boolean(data.paused),
+        originCategory: current.origin_claim,
+        evidenceStatus: current.evidence_status,
+        rightsStatus: current.rights_state
+      };
+    }
+
+    const { data: rel } = await this.client
+      .from("catalog_releases")
+      .select("*")
+      .eq("id", trackId)
+      .maybeSingle();
+    if (!rel) return null;
+    const wallets = rel.artist_id ? await this.resolveWallets([rel.artist_id]) : new Map<string, string>();
+    return this.mapCatalogReleaseToPassport(rel, wallets);
   }
 
   async getSeriesById(seriesId: string): Promise<PassSeriesEntity | null> {
     const { data } = await this.client.from("series").select("*").eq("id", seriesId).maybeSingle();
-    return data ? this.mapSeries(data) : null;
+    if (!data) return null;
+    const wallets = data.artist_user_id
+      ? await this.resolveWallets([data.artist_user_id])
+      : new Map<string, string>();
+    return this.mapSeries(data, wallets);
   }
 
   async createSeries(series: PassSeriesEntity): Promise<PassSeriesEntity> {
@@ -208,7 +257,37 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
 
   async getCampaignById(campaignId: string): Promise<CampaignEntity | null> {
     const { data } = await this.client.from("campaigns").select("*").eq("id", campaignId).maybeSingle();
-    return data ? this.mapCampaign(data) : null;
+    if (!data) return null;
+    const wallets = data.artist_user_id
+      ? await this.resolveWallets([data.artist_user_id])
+      : new Map<string, string>();
+    return this.mapCampaign(data, wallets);
+  }
+
+  async saveCampaign(campaign: CampaignEntity): Promise<CampaignEntity> {
+    const { data, error } = await this.client
+      .from("campaigns")
+      .upsert({
+        id: campaign.id,
+        track_id: campaign.trackId,
+        artist_user_id: campaign.artistUserId,
+        title: campaign.title,
+        goal_smallest_units: campaign.goalSmallestUnits,
+        raised_smallest_units: campaign.raisedSmallestUnits,
+        share_supply: campaign.shareSupply,
+        deadline: campaign.deadline.toISOString(),
+        use_of_funds: campaign.useOfFunds,
+        rights_scope: campaign.rightsScope,
+        status: campaign.status,
+        vault_address: campaign.vaultAddress
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      ...this.mapCampaign(data),
+      artistWallet: campaign.artistWallet
+    };
   }
 
   async recordCampaignPledge(params: {
@@ -265,7 +344,11 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
       .select("*")
       .eq("id", spotListingId)
       .maybeSingle();
-    return data ? this.mapSpotListing(data) : null;
+    if (!data) return null;
+    const wallets = data.seller_user_id
+      ? await this.resolveWallets([data.seller_user_id])
+      : new Map<string, string>();
+    return this.mapSpotListing(data, wallets);
   }
 
   async saveSpotListing(listing: SpotListingEntity): Promise<SpotListingEntity> {
@@ -568,11 +651,114 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
     return this.mapMarket(data);
   }
 
-  private mapSeries = (row: any): PassSeriesEntity => ({
+  async recordChainEvent(params: {
+    signature: string;
+    eventIndex: number;
+    slot: number;
+    eventType: string;
+    payload: Record<string, unknown>;
+    finality: "confirmed" | "finalized";
+  }): Promise<void> {
+    const { error } = await this.client.from("chain_events").upsert(
+      {
+        signature: params.signature,
+        event_index: params.eventIndex,
+        slot: params.slot,
+        event_type: params.eventType,
+        payload: params.payload,
+        finality: params.finality
+      },
+      { onConflict: "signature,event_index" }
+    );
+    if (error) throw new Error(error.message);
+  }
+
+  async getPortfolioForUser(userId: string) {
+    const [passes, receipts, spotRes] = await Promise.all([
+      this.listPassesByOwner(userId),
+      this.listReceiptsForUser(userId),
+      this.client.from("spot_listings").select("*").eq("seller_user_id", userId)
+    ]);
+    const wallets = await this.resolveWallets([userId]);
+    return {
+      passes,
+      receipts,
+      spotListings: (spotRes.data ?? []).map((row: any) => this.mapSpotListing(row, wallets))
+    };
+  }
+
+  async listDistributionEntitlements(cycleId: string) {
+    const { data } = await this.client
+      .from("distribution_record_snapshots")
+      .select("user_id, units")
+      .eq("cycle_id", cycleId)
+      .gt("units", 0);
+    const rows = data ?? [];
+    if (rows.length === 0) return [];
+    const userIds = rows.map((r: any) => String(r.user_id));
+    const wallets = await this.resolveWallets(userIds);
+    return rows.map((r: any) => ({
+      userId: String(r.user_id),
+      walletAddress: wallets.get(String(r.user_id)) ?? "11111111111111111111111111111111",
+      units: Number(r.units ?? 0)
+    }));
+  }
+
+  private async resolveWallets(userIds: readonly string[]): Promise<Map<string, string>> {
+    const unique = Array.from(new Set(userIds.filter(Boolean)));
+    const map = new Map<string, string>();
+    if (unique.length === 0) return map;
+    const { data } = await this.client
+      .from("wallets")
+      .select("user_id, address, is_primary")
+      .in("user_id", unique);
+    for (const row of data ?? []) {
+      const uid = String((row as any).user_id);
+      const addr = String((row as any).address);
+      if (!map.has(uid) || (row as any).is_primary) {
+        map.set(uid, addr);
+      }
+    }
+    return map;
+  }
+
+  private mapCatalogReleaseToPassport(
+    row: any,
+    walletByUser: Map<string, string>
+  ): TrackPassportSummary | null {
+    const payload = row.payload ?? {};
+    const manifest = payload.manifest ?? {};
+    const manifestHash =
+      typeof payload.manifestHash === "string" && payload.manifestHash.length === 64
+        ? payload.manifestHash
+        : null;
+    if (!manifestHash) return null;
+    return {
+      trackId: row.id,
+      title: String(payload.title ?? "Untitled Release"),
+      artistName: String(payload.artistName ?? "Artist"),
+      artistWallet: String(
+        payload.artistWallet ??
+          walletByUser.get(row.artist_id) ??
+          "11111111111111111111111111111111"
+      ),
+      currentVersion: Number(manifest.version ?? 1),
+      manifestHash,
+      paused: Boolean(row.paused),
+      originCategory: manifest.originCategory ?? row.origin ?? "UNKNOWN",
+      evidenceStatus: manifest.evidenceStatus ?? "UNVERIFIED",
+      rightsStatus: manifest.rightsStatus ?? "RESTRICTED"
+    };
+  }
+
+  private mapSeries = (row: any, walletByUser?: Map<string, string>): PassSeriesEntity => ({
     id: row.id,
     trackId: row.track_id,
     artistUserId: row.artist_user_id,
-    artistWallet: row.artist_wallet ?? "11111111111111111111111111111111",
+    artistWallet:
+      row.artist_wallet ??
+      walletByUser?.get(row.artist_user_id) ??
+      "11111111111111111111111111111111",
     title: row.title,
     benefitSummary: row.benefit_summary,
     cap: row.cap,
@@ -611,11 +797,14 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
     createdAt: new Date(row.created_at)
   });
 
-  private mapCampaign = (row: any): CampaignEntity => ({
+  private mapCampaign = (row: any, walletByUser?: Map<string, string>): CampaignEntity => ({
     id: row.id,
     trackId: row.track_id,
     artistUserId: row.artist_user_id,
-    artistWallet: row.artist_wallet ?? "11111111111111111111111111111111",
+    artistWallet:
+      row.artist_wallet ??
+      walletByUser?.get(row.artist_user_id) ??
+      "11111111111111111111111111111111",
     title: row.title,
     goalSmallestUnits: String(row.goal_smallest_units),
     raisedSmallestUnits: String(row.raised_smallest_units),
@@ -627,13 +816,17 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepositoryPort 
     vaultAddress: row.vault_address
   });
 
-  private mapSpotListing = (row: any): SpotListingEntity => ({
+  private mapSpotListing = (row: any, walletByUser?: Map<string, string>): SpotListingEntity => ({
     id: row.id,
     campaignId: row.campaign_id,
     sellerUserId: row.seller_user_id,
-    sellerWallet: row.seller_wallet ?? "11111111111111111111111111111111",
+    sellerWallet:
+      row.seller_wallet ??
+      walletByUser?.get(row.seller_user_id) ??
+      "11111111111111111111111111111111",
     remainingUnits: row.remaining_units,
     unitPriceSmallestUnits: String(row.unit_price_smallest_units),
+    nonce: Number(row.nonce ?? 0),
     active: Boolean(row.active)
   });
 

@@ -19,6 +19,10 @@ export interface UnsignedChainTransaction {
   readonly serializedBase64: string;
   readonly expectedSigners: readonly string[];
   readonly programId: string;
+  readonly recentBlockhash?: string;
+  readonly lastValidBlockHeight?: number;
+  readonly cluster?: string;
+  readonly accounts?: Record<string, string>;
 }
 
 export interface MarketplaceChainPort {
@@ -32,9 +36,21 @@ export interface MarketplaceChainPort {
     nonce: string;
   }): Promise<UnsignedChainTransaction>;
 
+  buildCreateSeriesTx?(params: {
+    artistWallet: string;
+    trackId: string;
+    seriesId: string;
+    termsHash: string;
+    benefitHash: string;
+    cap: number;
+    primaryPriceSmallestUnits: string;
+    expiryUnixSeconds: number;
+  }): Promise<UnsignedChainTransaction>;
+
   buildPrimaryPassPurchaseTx(params: {
     buyerWallet: string;
     artistWallet: string;
+    trackId?: string;
     seriesId: string;
     serial: number;
     version: number;
@@ -42,10 +58,30 @@ export interface MarketplaceChainPort {
     amountSmallestUnits: string;
   }): Promise<UnsignedChainTransaction>;
 
+  buildListPassTx?(params: {
+    ownerWallet: string;
+    artistWallet: string;
+    trackId: string;
+    seriesId: string;
+    serial: number;
+    listingPriceSmallestUnits: string;
+    listingExpiryUnixSeconds: number;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildCancelPassListingTx?(params: {
+    ownerWallet: string;
+    artistWallet: string;
+    seriesId: string;
+    serial: number;
+  }): Promise<UnsignedChainTransaction>;
+
   buildListingPurchaseTx(params: {
     buyerWallet: string;
     sellerWallet: string;
     artistWallet: string;
+    trackId?: string;
+    seriesId?: string;
+    serial?: number;
     passId: string;
     nonce: number;
     version: number;
@@ -53,37 +89,120 @@ export interface MarketplaceChainPort {
     amountSmallestUnits: string;
   }): Promise<UnsignedChainTransaction>;
 
+  buildRedeemPassTx?(params: {
+    ownerWallet: string;
+    artistWallet: string;
+    seriesId: string;
+    serial: number;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildExpirePassTx?(params: {
+    payerWallet: string;
+    artistWallet: string;
+    seriesId: string;
+    serial: number;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildCreateCampaignTx?(params: {
+    artistWallet: string;
+    trackId: string;
+    campaignId: string;
+    termsHash: string;
+    goalSmallestUnits: string;
+    shareSupply: number;
+    deadlineUnixSeconds: number;
+  }): Promise<UnsignedChainTransaction>;
+
   buildCampaignPledgeTx(params: {
     payerWallet: string;
+    artistWallet?: string;
     vaultAddress: string;
     campaignId: string;
+    nonce?: string;
+    amountSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildReleaseMilestoneTx?(params: {
+    artistWallet: string;
+    campaignId: string;
+    vaultAddress: string;
+    milestoneIndex: number;
     amountSmallestUnits: string;
   }): Promise<UnsignedChainTransaction>;
 
   buildCampaignRefundTx(params: {
     claimerWallet: string;
+    artistWallet?: string;
     vaultAddress: string;
     campaignId: string;
+    pledgeNonce?: string;
     amountSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildCreateSpotListingTx?(params: {
+    sellerWallet: string;
+    artistWallet: string;
+    campaignId: string;
+    spotListingId: string;
+    units: number;
+    unitPriceSmallestUnits: string;
+  }): Promise<UnsignedChainTransaction>;
+
+  buildCancelSpotListingTx?(params: {
+    sellerWallet: string;
+    artistWallet: string;
+    campaignId: string;
+    spotListingId: string;
   }): Promise<UnsignedChainTransaction>;
 
   buildSpotBuyTx(params: {
     buyerWallet: string;
     sellerWallet: string;
+    artistWallet?: string;
     spotListingId: string;
     campaignId: string;
     units: number;
+    expectedNonce?: number;
     unitPriceSmallestUnits: string;
     totalSmallestUnits: string;
   }): Promise<UnsignedChainTransaction>;
 
+  buildOpenDistributionCycleTx?(params: {
+    authorityWallet: string;
+    artistWallet: string;
+    campaignId: string;
+    cycleId: string;
+    evidenceHash: string;
+    merkleRootHex?: string;
+    entitlements?: ReadonlyArray<{ claimerWallet: string; amountSmallestUnits: string }>;
+    verifiedRevenueSmallestUnits: string;
+    totalSupplySnapshot: number;
+  }): Promise<UnsignedChainTransaction>;
+
   buildDistributionClaimTx(params: {
     claimerWallet: string;
+    artistWallet?: string;
     vaultAddress: string;
     cycleId: string;
     campaignId: string;
     payoutSmallestUnits: string;
+    merkleProofHex?: readonly string[];
+    entitlements?: ReadonlyArray<{ claimerWallet: string; amountSmallestUnits: string }>;
   }): Promise<UnsignedChainTransaction>;
+
+  submitSignedTransaction?(signedBase64: string): Promise<{ signature: string }>;
+
+  verifyFinalizedMarketplaceTx?(params: {
+    signature: string;
+    expectedInstruction: string;
+    expectedSigner?: string;
+    expectedAccounts?: readonly string[];
+  }): Promise<{
+    verified: boolean;
+    slot: number;
+    events: ReadonlyArray<{ name: string; dataBase64: string }>;
+    reason?: string;
+  }>;
 
   verifyFinalizedDeposit(params: {
     signature: string;
@@ -112,6 +231,7 @@ export interface MarketplaceRepositoryPort {
 
   // Layer 2 (Devnet / Demo Scope)
   getCampaignById(campaignId: string): Promise<CampaignEntity | null>;
+  saveCampaign?(campaign: CampaignEntity): Promise<CampaignEntity>;
   recordCampaignPledge(params: {
     campaignId: string;
     userId: string;
@@ -150,4 +270,24 @@ export interface MarketplaceRepositoryPort {
     side: "YES" | "NO";
     pairsCount: number;
   }): Promise<OpinionMarketEntity>;
+  recordChainEvent?(params: {
+    signature: string;
+    eventIndex: number;
+    slot: number;
+    eventType: string;
+    payload: Record<string, unknown>;
+    finality: "confirmed" | "finalized";
+  }): Promise<void>;
+  getPortfolioForUser?(userId: string): Promise<{
+    passes: SupporterPassEntity[];
+    receipts: SupportReceiptEntity[];
+    spotListings: SpotListingEntity[];
+  }>;
+  listDistributionEntitlements?(cycleId: string): Promise<
+    Array<{
+      userId: string;
+      walletAddress: string;
+      units: number;
+    }>
+  >;
 }

@@ -143,6 +143,7 @@ export async function preparePrimaryPassPurchase(
   const unsignedTx = await chain.buildPrimaryPassPurchaseTx({
     buyerWallet: params.buyerWallet,
     artistWallet: series.artistWallet,
+    trackId: series.trackId,
     seriesId: series.id,
     serial: series.issued + 1,
     version: eligible.value.currentVersion,
@@ -251,6 +252,9 @@ export async function prepareBuyListedPass(
     buyerWallet: params.buyerWallet,
     sellerWallet: pass.ownerWallet,
     artistWallet: series.artistWallet,
+    trackId: pass.trackId,
+    seriesId: pass.seriesId,
+    serial: pass.serial,
     passId: pass.id,
     nonce: pass.nonce,
     version: eligible.value.currentVersion,
@@ -328,14 +332,18 @@ export async function pledgeToCampaign(
   if (campaign.deadline.getTime() <= clock.now().getTime()) {
     return err(new Error("Campaign deadline has passed"));
   }
+  const nonce = new DataView(crypto.getRandomValues(new Uint8Array(8)).buffer).getBigUint64(0).toString();
   const unsignedTx = await chain.buildCampaignPledgeTx({
     payerWallet: params.payerWallet,
+    artistWallet: campaign.artistWallet,
     vaultAddress: campaign.vaultAddress,
     campaignId: campaign.id,
+    nonce,
     amountSmallestUnits: params.amountSmallestUnits
   });
   return ok({
     campaign,
+    nonce,
     amountSmallestUnits: params.amountSmallestUnits,
     unsignedTx,
     settlementStatus: "pending_signature"
@@ -371,6 +379,7 @@ export async function refundFailedCampaign(
 
   const unsignedTx = await chain.buildCampaignRefundTx({
     claimerWallet: params.claimerWallet,
+    artistWallet: campaign.artistWallet,
     vaultAddress: campaign.vaultAddress,
     campaignId: campaign.id,
     amountSmallestUnits: amount
@@ -412,15 +421,18 @@ export async function buySpotShareUnits(
   if (params.units <= 0 || params.units > listing.remainingUnits) {
     return err(new Error("Requested units exceed available ask size"));
   }
+  const campaign = await repo.getCampaignById(listing.campaignId);
   const totalSmallestUnits = (
     BigInt(listing.unitPriceSmallestUnits) * BigInt(params.units)
   ).toString();
   const unsignedTx = await chain.buildSpotBuyTx({
     buyerWallet: params.buyerWallet,
     sellerWallet: listing.sellerWallet,
+    artistWallet: campaign?.artistWallet,
     spotListingId: listing.id,
     campaignId: listing.campaignId,
     units: params.units,
+    expectedNonce: listing.nonce ?? 0,
     unitPriceSmallestUnits: listing.unitPriceSmallestUnits,
     totalSmallestUnits
   });
@@ -477,12 +489,28 @@ export async function claimDistributionPayout(
   });
   if (payout <= 0n) return err(new Error("No remaining claimable payout in cycle"));
 
+  let entitlements: Array<{ claimerWallet: string; amountSmallestUnits: string }> | undefined;
+  if (repo.listDistributionEntitlements) {
+    const holders = await repo.listDistributionEntitlements(cycle.id);
+    if (holders.length > 0) {
+      entitlements = holders.map((h) => ({
+        claimerWallet: h.walletAddress,
+        amountSmallestUnits: (
+          (BigInt(cycle.verifiedRevenueSmallestUnits) * BigInt(h.units)) /
+          BigInt(cycle.totalSupplySnapshot)
+        ).toString()
+      }));
+    }
+  }
+
   const unsignedTx = await chain.buildDistributionClaimTx({
     claimerWallet: params.claimerWallet,
+    artistWallet: campaign.artistWallet,
     vaultAddress: campaign.vaultAddress,
     cycleId: cycle.id,
     campaignId: cycle.campaignId,
-    payoutSmallestUnits: payout.toString()
+    payoutSmallestUnits: payout.toString(),
+    entitlements
   });
 
   return ok({
