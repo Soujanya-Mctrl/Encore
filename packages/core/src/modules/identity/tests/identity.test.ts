@@ -28,6 +28,12 @@ function createFakeRepo(): UserRepositoryPort & ChallengeRepositoryPort {
     async findUserById(id) {
       return users.get(id) ?? null;
     },
+    async findStudioChannelForUser() {
+      return null;
+    },
+    async listReviewAssignmentsForUser() {
+      return [];
+    },
     async findUserByIdentity(provider, subject) {
       const ident = idents.get(`${provider}:${subject}`);
       return ident ? (users.get(ident.userId) ?? null) : null;
@@ -158,6 +164,7 @@ describe("Identity Domain & Policies", () => {
     const clock = { now: () => now };
 
     await repo.createChallenge({
+      message: `Encore login ${VALID_ADDR_2} nonce-1234567890123456`,
       nonce: "nonce-1234567890123456",
       address: VALID_ADDR_2,
       intendedAction: "login",
