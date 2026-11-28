@@ -93,7 +93,20 @@ export function getServerContainer(): ServerContainer {
     marketplace: supabaseUrl && serviceRoleKey
       ? new SupabaseMarketplaceRepository(supabaseUrl, serviceRoleKey)
       : new InMemoryMarketplaceRepository(),
-    chain: new SolanaMarketplaceChainAdapter(process.env.NEXT_PUBLIC_ENCORE_PROGRAM_ID),
+    chain: new SolanaMarketplaceChainAdapter({
+      programId: process.env.NEXT_PUBLIC_ENCORE_PROGRAM_ID,
+      rpcUrl: process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+      mint: process.env.NEXT_PUBLIC_TEST_USDC_MINT,
+      platformWallet:
+        process.env.ENCORE_PLATFORM_WALLET ?? process.env.NEXT_PUBLIC_PLATFORM_WALLET,
+      cluster:
+        (process.env.NEXT_PUBLIC_SOLANA_CLUSTER as
+          | "devnet"
+          | "testnet"
+          | "mainnet-beta"
+          | "localnet"
+          | undefined) ?? "devnet"
+    }),
     queue: new PgmqAdapter(supabaseUrl, serviceRoleKey),
     clock: { now: () => new Date() },
     externalIdentity: pollarKey && authOrigin

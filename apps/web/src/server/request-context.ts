@@ -63,6 +63,23 @@ export async function requireAuthenticatedUser(
   return { user, errorResponse: null };
 }
 
+export async function resolvePrimaryWallet(userId: string): Promise<
+  { address: string; errorResponse: null } | { address: null; errorResponse: NextResponse }
+> {
+  const wallets = await getServerContainer().users.listWalletsForUser(userId);
+  const primary = wallets.find((w) => w.isPrimary) ?? wallets[0];
+  if (!primary) {
+    return {
+      address: null,
+      errorResponse: authJson(
+        { error: "Connect or provision a Solana wallet before signing transactions" },
+        400
+      )
+    };
+  }
+  return { address: primary.address, errorResponse: null };
+}
+
 export function attachSessionCookie(response: NextResponse, token: string): void {
   response.cookies.set(ENCORE_SESSION_COOKIE, token, {
     httpOnly: true,

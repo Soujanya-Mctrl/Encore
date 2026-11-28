@@ -10,13 +10,15 @@ import {
 } from "./pda/seeds.js";
 
 export * from "./pda/seeds.js";
-
+export * from "./merkle.js";
+export * from "./marketplace.js";
 export * from "./registry.js";
 
 function anchorDiscriminator(ixName: string): Buffer {
   return crypto.createHash("sha256").update(`global:${ixName}`).digest().subarray(0, 8);
 }
 
+/** @deprecated Use real Anchor instruction builders in `./marketplace.js` instead. */
 export function buildUnsignedMemoAnchorEnvelope(params: {
   payer: string;
   programId?: string;
